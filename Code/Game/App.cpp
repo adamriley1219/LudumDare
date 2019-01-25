@@ -20,6 +20,8 @@ bool g_isInDebug = false;
 RNG* g_theRNG = nullptr;
 Game* g_theGame = nullptr;
 
+extern void* g_hWnd;
+
 //--------------------------------------------------------------------------
 /**
 * Startup
@@ -29,7 +31,7 @@ void App::Startup()
 	g_theRNG = new RNG();
 	g_theEventSystem = new EventSystem();
 	g_theConsole = new DevConsole( "SquirrelFixedFont" );
-	g_theRenderer = new RenderContext();
+	g_theRenderer = new RenderContext( g_hWnd );
 	g_theInputSystem = new InputSystem();
 	g_theAudioSystem = new AudioSystem();
 	g_theGame = new Game();

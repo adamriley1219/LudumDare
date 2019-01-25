@@ -22,10 +22,10 @@ constexpr float CLIENT_ASPECT = 2.0f; // We are requesting a 1:1 aspect (square)
 //-----------------------------------------------------------------------------------------------
 // #SD1ToDo: Move each of these items to its proper place, once that place is established
 // 
-HWND g_hWnd = nullptr;							// ...becomes WindowContext::m_windowHandle
+void* g_hWnd = nullptr;							// ...becomes WindowContext::m_windowHandle
 HDC g_displayDeviceContext = nullptr;			// ...becomes WindowContext::m_displayContext
 HGLRC g_openGLRenderingContext = nullptr;		// ...becomes RenderContext::m_apiRenderingContext
-const char* APP_NAME = "Protogame2D";	// ...becomes ???
+const char* APP_NAME = "RTS";					// ...becomes ???
 
 
 //-----------------------------------------------------------------------------------------------
@@ -38,6 +38,10 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure( HWND windowHandle, UINT wmMess
 {
 	switch( wmMessageCode )
 	{
+		case WM_CREATE: 
+		{
+			// Window creation happened.
+		} break;
 		// App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
 		case WM_CLOSE:		
 		{
@@ -66,6 +70,29 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure( HWND windowHandle, UINT wmMess
 			g_theApp->HandleKeyReleased( asKey );
 			break;
 		}
+
+		case WM_MOUSEMOVE:
+			// mouse has moved.
+			// wparam - mouse keys
+			// lparam - mouse positions
+
+			// Positions are relative to client area.
+			// int mouse_x = LOWORD(lparam);
+			// int mouse_y = HIWORD(lparam);
+			break;
+		case WM_MOVE:
+		case WM_SIZE: 
+		{
+			// Called when the window changes size or is moved.
+			break;
+		} 
+		case WM_CHAR: 
+		{
+			// User has typed a character
+			// wparam - char code
+			// lparam - additional information (like ALT state)
+			break;
+		} 
 	}
 
 	// Send back to Windows any unhandled/unconsumed messages we want other apps to see (e.g. play/pause in music apps, etc.)
@@ -76,7 +103,7 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure( HWND windowHandle, UINT wmMess
 //-----------------------------------------------------------------------------------------------
 // #SD1ToDo: We will move this function to a more appropriate place later on...
 //
-void CreateOpenGLWindow( HINSTANCE applicationInstanceHandle, float clientAspect )
+void CreateD3D11Window( HINSTANCE applicationInstanceHandle, float clientAspect )
 {
 	// Define a window style/class
 	WNDCLASSEX windowClassDescription;
@@ -146,30 +173,14 @@ void CreateOpenGLWindow( HINSTANCE applicationInstanceHandle, float clientAspect
 		applicationInstanceHandle,
 		NULL );
 
-	ShowWindow( g_hWnd, SW_SHOW );
-	SetForegroundWindow( g_hWnd );
-	SetFocus( g_hWnd );
+	ShowWindow( (HWND)g_hWnd, SW_SHOW );
+	SetForegroundWindow( (HWND)g_hWnd );
+	SetFocus( (HWND)g_hWnd );
 
-	g_displayDeviceContext = GetDC( g_hWnd );
+	g_displayDeviceContext = GetDC( (HWND)g_hWnd );
 
 	HCURSOR cursor = LoadCursor( NULL, IDC_ARROW );
 	SetCursor( cursor );
-
-	PIXELFORMATDESCRIPTOR pixelFormatDescriptor;
-	memset( &pixelFormatDescriptor, 0, sizeof( pixelFormatDescriptor ) );
-	pixelFormatDescriptor.nSize = sizeof( pixelFormatDescriptor );
-	pixelFormatDescriptor.nVersion = 1;
-	pixelFormatDescriptor.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	pixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
-	pixelFormatDescriptor.cColorBits = 24;
-	pixelFormatDescriptor.cDepthBits = 24;
-	pixelFormatDescriptor.cAccumBits = 0;
-	pixelFormatDescriptor.cStencilBits = 8;
-
-	int pixelFormatCode = ChoosePixelFormat( g_displayDeviceContext, &pixelFormatDescriptor );
-	SetPixelFormat( g_displayDeviceContext, pixelFormatCode, &pixelFormatDescriptor );
-	g_openGLRenderingContext = wglCreateContext( g_displayDeviceContext );
-	wglMakeCurrent( g_displayDeviceContext, g_openGLRenderingContext );
 }
 
 
@@ -207,10 +218,6 @@ void RunFrame( float timeFrameBeganSec )
 	RunMessagePump();
 
 	g_theApp->RunFrame( timeFrameBeganSec );
-
-	//TODO: move this into the WindowContext once created.
-	// "Present" the backbuffer by swapping the front (visible) and back (working) screen buffers
-	SwapBuffers( g_displayDeviceContext ); // Note: call this once at the end of each frame
 }
 
 void SetupXMLInfo()
@@ -222,16 +229,72 @@ void SetupXMLInfo()
 	g_gameConfigBlackboard.PopulateFromXmlElementAttributes( *root );
 }
 
+
+void UnregisterWindow()
+{
+	WCHAR windowTitle[ 1024 ];
+	MultiByteToWideChar( GetACP(), 0, APP_NAME, -1, windowTitle, sizeof( windowTitle ) / sizeof( windowTitle[ 0 ] ) );
+	UnregisterClass( windowTitle, GetModuleHandle(NULL) );
+}
+
+static HINSTANCE GetCurrentHINSTANCE()
+{
+	return ::GetModuleHandle(NULL);
+}
+
+bool RegisterWindow()
+{
+	WNDCLASSEX wc;
+	memset( &wc, 0, sizeof(wc) );
+
+	// Setup the definition for this window class
+	wc.cbSize = sizeof(WNDCLASSEX);
+
+	// This sets that it will redraw for vertical or horizontal changes
+	// and it also owns its own device context handle (more effecient if we're
+	// drawing to this window a lot - which we will be.
+	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+
+	// The Windows Messaeg Pump - handles messages for this window type.
+	wc.lpfnWndProc = WindowsMessageHandlingProcedure;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = GetCurrentHINSTANCE();
+
+	// Default icon for this window (can be set later)
+	wc.hIcon = NULL;
+	wc.hIconSm = NULL;
+
+	// Cursor to use (can be set later if needed)
+	wc.hCursor = ::LoadCursor( NULL, IDC_ARROW );
+	wc.hbrBackground = (HBRUSH) 0;
+	wc.lpszMenuName = NULL;
+
+	// Name to use when creating windows so it knows to use this class
+	WCHAR windowTitle[ 1024 ];
+	MultiByteToWideChar( GetACP(), 0, APP_NAME, -1, windowTitle, sizeof( windowTitle ) / sizeof( windowTitle[ 0 ] ) );
+	wc.lpszClassName = windowTitle;
+
+	ATOM result = RegisterClassEx( &wc );
+	if (NULL == result) {
+		return false;
+	}
+
+	return true;
+}
+
 //-----------------------------------------------------------------------------------------------
 void Startup( HINSTANCE applicationInstanceHandle )
 {
+	RegisterWindow();
 	SetupXMLInfo();
-	CreateOpenGLWindow( applicationInstanceHandle, CLIENT_ASPECT );
+	CreateD3D11Window( applicationInstanceHandle, CLIENT_ASPECT );
 	if(g_theApp != nullptr)
 		delete g_theApp;
 	g_theApp = new App();
 	g_theApp->Startup();
 }
+
 
 
 //-----------------------------------------------------------------------------------------------
@@ -241,8 +304,9 @@ void Shutdown()
 	g_theApp->Shutdown();
 	delete g_theApp;
 	g_theApp = nullptr;
-}
 
+	UnregisterWindow();
+}
 
 //-----------------------------------------------------------------------------------------------
 int WINAPI WinMain( HINSTANCE applicationInstanceHandle, HINSTANCE, LPSTR commandLineString, int )
