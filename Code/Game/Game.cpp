@@ -3,6 +3,7 @@
 #include "Engine/Renderer/SpriteSheet.hpp"
 #include "Engine/Renderer/SpriteDefinition.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
+#include "Engine/Renderer/Shaders/Shader.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec2.hpp"
@@ -39,6 +40,7 @@ Game::~Game()
 */
 void Game::Startup()
 {
+	m_shader = g_theRenderer->CreateOrGetShaderFromFile( "Data/Shaders/nop_color.hlsl" );
 
 }
 
@@ -51,21 +53,6 @@ void Game::Shutdown()
 
 }
 
-//--------------------------------------------------------------------------
-/**
-* ConstructGame
-*/
-void Game::ConstructGame()
-{
-}
-
-//--------------------------------------------------------------------------
-/**
-* DeconstructGame
-*/
-void Game::DeconstructGame()
-{
-}
 static int g_index = 0;
 
 //--------------------------------------------------------------------------
@@ -111,6 +98,8 @@ float g_charTimer = 0.0f;
 */
 void Game::GameRender() const
 {
+	g_theRenderer->BindShader( m_shader );
+
 
 	static Texture* testTexture = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
 	
@@ -273,6 +262,24 @@ void Game::ResetGame()
 {
 	DeconstructGame();
 	ConstructGame();
+}
+
+//--------------------------------------------------------------------------
+/**
+* ConstructGame
+*/
+void Game::ConstructGame()
+{
+
+}
+
+//--------------------------------------------------------------------------
+/**
+* DeconstructGame
+*/
+void Game::DeconstructGame()
+{
+
 }
 
 //--------------------------------------------------------------------------

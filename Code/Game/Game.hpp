@@ -1,6 +1,7 @@
 #pragma once
 #include "Game/GameCommon.hpp"
 
+class Shader;
 
 class Game
 {
@@ -42,4 +43,6 @@ private:
 	// Quality of life variables
 	float m_screenShakeIntensity = 0.0f;
 	float m_shakeSpeedReduction = 2.0f;
+
+	Shader* m_shader;
 };

@@ -287,8 +287,9 @@ bool RegisterWindow()
 void Startup( HINSTANCE applicationInstanceHandle )
 {
 	RegisterWindow();
-	SetupXMLInfo();
 	CreateD3D11Window( applicationInstanceHandle, CLIENT_ASPECT );
+
+	SetupXMLInfo();
 	if(g_theApp != nullptr)
 		delete g_theApp;
 	g_theApp = new App();

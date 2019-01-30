@@ -207,17 +207,18 @@ void App::TogglePause()
 */
 void App::BeginFrame()
 {
-	m_camera.SetOrthoView( Vec2( 0.0f, 0.0f ), Vec2( WORLD_WIDTH, WORLD_HEIGHT ) );
-	CameraShake2D( m_camera, g_theGame->GetScreenShakeIntensity() );
-
-	g_theRenderer->		BeginCamera( m_camera );
-
 	g_theEventSystem->	BeginFrame();
 	g_theRenderer->		BeginFrame();
 	g_theConsole->		BeginFrame();
 	g_theInputSystem->	BeginFrame();
 	g_theAudioSystem->	BeginFrame();
+
+	m_camera.SetOrthoView( Vec2( 0.0f, 0.0f ), Vec2( WORLD_WIDTH, WORLD_HEIGHT ) );
+	CameraShake2D( m_camera, g_theGame->GetScreenShakeIntensity() );
+	m_camera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
+	g_theRenderer->		BeginCamera( m_camera );
 }
+
 
 //--------------------------------------------------------------------------
 /**
@@ -225,7 +226,25 @@ void App::BeginFrame()
 */
 void App::Update( float deltaSeconds )
 {
-	m_time += deltaSeconds;
+	timer += deltaSeconds;
+
+	if( timer > 1.0f )
+	{
+		timer = 0.0f;
+		if( clearColor == Rgba::RED )
+		{
+			clearColor = Rgba::GREEN;
+		}
+		else if( clearColor == Rgba::GREEN )
+		{
+			clearColor = Rgba::BLUE;
+		}
+		else
+		{
+			clearColor = Rgba::RED;
+		}
+	}
+	
 
 	g_theConsole->	Update( m_time );
 	g_theGame->		UpdateGame( deltaSeconds );
@@ -293,15 +312,13 @@ void App::RenderDebugLeftJoystick() const
 */
 void App::Render() const
 {
-	g_theRenderer->ClearScreen( Rgba( 0.f, 0.f, 0.f ) );
-	g_theRenderer->BeginCamera( m_camera );
+	g_theRenderer->ClearScreen( clearColor );
 	if( g_isInDebug )
 	{
 		RenderDebugLeftJoystick();
 	}
 	g_theGame->		GameRender();
 	g_theConsole->	Render( g_theRenderer, m_camera, m_consoleTextHeight );
-	g_theRenderer->	EndCamera( m_camera );
 }
 
 //--------------------------------------------------------------------------
@@ -316,7 +333,7 @@ void App::EndFrame()
 	g_theRenderer->		EndFrame();
 	g_theEventSystem->	EndFrame();
 
-	g_theRenderer->		EndCamera( m_camera );
+	g_theRenderer->		EndCamera();
 }
 
 //--------------------------------------------------------------------------

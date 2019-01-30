@@ -10,6 +10,9 @@
     <Filter Include="Data">
       <UniqueIdentifier>{b23cac94-af11-45bd-9bfb-5e7f60128ed8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Data\Shaders">
+      <UniqueIdentifier>{d6d95299-1258-4a86-968f-96c7d23d618d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Entity.cpp">
@@ -52,5 +55,10 @@
     <Xml Include="..\..\Run\Data\GameConfig.xml">
       <Filter>Data</Filter>
     </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\..\Run\Data\Shaders\nop_color.hlsl">
+      <Filter>Data\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
