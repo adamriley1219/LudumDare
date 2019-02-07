@@ -216,7 +216,7 @@ void App::BeginFrame()
 	m_camera.SetOrthoView( Vec2( 0.0f, 0.0f ), Vec2( WORLD_WIDTH, WORLD_HEIGHT ) );
 	CameraShake2D( m_camera, g_theGame->GetScreenShakeIntensity() );
 	m_camera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
-	g_theRenderer->		BeginCamera( m_camera );
+	g_theRenderer->		BeginCamera( &m_camera );
 }
 
 

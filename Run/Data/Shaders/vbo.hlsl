@@ -16,7 +16,7 @@
 struct vs_input_t 
 {
    // we are not defining our own input data; 
-   float4 position      : POSITION; 
+   float3 position      : POSITION; 
    float4 color         : COLOR; 
    float2 uv            : TEXCOORD; 
 }; 
@@ -67,7 +67,7 @@ v2f_t VertexFunction( vs_input_t input )
    v2f_t v2f = (v2f_t)0;
 
    // can no grab it from the input stream; 
-   float4 inPos = input.position; 
+   float3 inPos = input.position; 
     
    float clip_x = RangeMap( inPos.x, ORTHO_MIN.x, ORTHO_MAX.x, -1, 1 ); 
    float clip_y = RangeMap( inPos.y, ORTHO_MIN.y, ORTHO_MAX.y, -1, 1 ); 
