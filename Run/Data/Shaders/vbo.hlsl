@@ -41,6 +41,15 @@ cbuffer camera_constants : register(b2)
    float2 ORTHO_MAX; 
 };
 
+
+cbuffer timeConstants : register(b1)
+{
+	float TIME;
+	float SIN_TIME;
+	float COS_TIME;
+	float SIN_7TIME;
+};
+
 //--------------------------------------------------------------------------------------
 // Programmable Shader Stages
 //--------------------------------------------------------------------------------------
@@ -67,8 +76,9 @@ v2f_t VertexFunction( vs_input_t input )
    v2f_t v2f = (v2f_t)0;
 
    // can no grab it from the input stream; 
-   float3 inPos = input.position; 
-    
+   float3 inPos = input.position;
+   inPos.x += SIN_TIME * 10.0f;
+   inPos.y += SIN_7TIME * 15.0f;
    float clip_x = RangeMap( inPos.x, ORTHO_MIN.x, ORTHO_MAX.x, -1, 1 ); 
    float clip_y = RangeMap( inPos.y, ORTHO_MIN.y, ORTHO_MAX.y, -1, 1 ); 
 
