@@ -40,8 +40,8 @@ Game::~Game()
 */
 void Game::Startup()
 {
-	m_shader = g_theRenderer->CreateOrGetShaderFromFile( "Data/Shaders/nop_color.hlsl" );
-
+	m_shader = g_theRenderer->CreateOrGetShaderFromFile( "Data/Shaders/vbo.hlsl" );
+	g_theRenderer->m_shader = m_shader;
 }
 
 //--------------------------------------------------------------------------
@@ -115,7 +115,7 @@ void Game::GameRender() const
 	AddVertsForRing2D( verts, Vec2( 120.0f, 30.0f ), 15.0f, 3.0f, Rgba( 1.0f, 1.0f, 1.0f ), 5 );
 	AddVertsForRing2D( verts, Vec2( 145.0f, 30.0f ), 10.0f, 1.0f, Rgba( 0.4f, 1.0f, 0.4f ) );
 
- 	g_theRenderer->DrawVertexArray( (int) verts.size(), &verts[0] );
+// 	g_theRenderer->DrawVertexArray( (int) verts.size(), &verts[0] );
 
 
 	// Text of spriteSheets
@@ -130,7 +130,7 @@ void Game::GameRender() const
 	AddVertsForAABB2D(ssVerts, AABB2( 85.f, 80.f, 90.f, 90 ), Rgba( 1.0f, 1.0f, 1.0f ), uvAtBottomLeft, uvAtTopRight );
 
 	g_theRenderer->BindTexture( spriteSheet.GetTexture() );
-	g_theRenderer->DrawVertexArray( ssVerts );
+//	g_theRenderer->DrawVertexArray( ssVerts );
 
 	// Bitmap Test
 	if( !g_testBitmap )
@@ -142,7 +142,7 @@ void Game::GameRender() const
 	g_testBitmap->AddVertsFor2DText( bmVerts, Vec2( 110.0f, 50.0f ), 5.0f, "HELLO, WORLD", .5f);
 
 	g_theRenderer->BindTexture( g_testBitmap->GetTexture() );
-	g_theRenderer->DrawVertexArray( bmVerts );
+//	g_theRenderer->DrawVertexArray( bmVerts );
 
 
 	SpriteAnimDefinition spriteAnimDef( spriteSheet, 0, 15, 30.0f, SPRITE_ANIM_PLAYBACK_PINGPONG );
@@ -154,7 +154,7 @@ void Game::GameRender() const
 	AddVertsForAABB2D(ssVerts, AABB2( 95.f, 80.f, 100.f, 90 ), Rgba( 1.0f, 1.0f, 1.0f ), uvAtBottomLeft, uvAtTopRight );
 
 	g_theRenderer->BindTexture( spriteSheet.GetTexture() );
-	g_theRenderer->DrawVertexArray( ssVerts );
+//	g_theRenderer->DrawVertexArray( ssVerts );
 
 	float x = SinDegrees( g_theApp->GetGlobleTime() * 360.f / 3.7f + 17.0f ) + .50f;
 	x = x > 0.0f ? x : 0.0f;
@@ -168,7 +168,7 @@ void Game::GameRender() const
 	AddVertsForAABB2D( ssVerts, box, Rgba::CYAN, Vec2::ZERO, Vec2::ONE );
 	AddVertsForAABB2D( ssVerts, box2, Rgba::BLUE, Vec2::ZERO, Vec2::ONE );
 	g_theRenderer->BindTexture( nullptr );
-	g_theRenderer->DrawVertexArray(ssVerts);
+//	g_theRenderer->DrawVertexArray(ssVerts);
 
 	ssVerts.clear();
 	Vec2 alignment( x , y );
@@ -176,7 +176,7 @@ void Game::GameRender() const
 	g_testBitmap->AddVertsFor2DTextAlignedInBox( ssVerts, g_pingPongTimer * 1.5f, "Hello!\ngood to go", box2, Vec2::ALIGN_CENTERED, SHRINK_TO_FIT, 1.0f, Rgba::BLACK, g_printGlyphCount );
  	g_testBitmap->AddVertsFor2DTextAlignedInBox( ssVerts, 1.0f, "This is the\nTest for\nAlignment", box2, alignment, SHRINK_TO_FIT, 1.0f, Rgba::MAGENTA );
 	g_theRenderer->BindTexture( g_testBitmap->GetTexture() );
-	g_theRenderer->DrawVertexArray( ssVerts );
+//	g_theRenderer->DrawVertexArray( ssVerts );
 
 	// Debug
 	if( g_isInDebug )
