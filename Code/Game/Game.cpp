@@ -40,7 +40,7 @@ Game::~Game()
 */
 void Game::Startup()
 {
-	m_shader = g_theRenderer->CreateOrGetShaderFromFile( "Data/Shaders/vbo.hlsl" );
+	m_shader = g_theRenderer->CreateOrGetShaderFromFile( "Data/Shaders/default_unlit.hlsl" );
 	g_theRenderer->m_shader = m_shader;
 }
 
@@ -100,15 +100,16 @@ void Game::GameRender() const
 {
 	g_theRenderer->BindShader( m_shader );
 
-	static Texture* testTexture = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
+	static TextureView2D* testTextureView = g_theRenderer->CreateOrGetTextureViewFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
 	
  	std::vector<Vertex_PCU> verts;
-	g_theRenderer->BindTexture( testTexture );
+	g_theRenderer->BindTextureView( 0, (TextureView*) testTextureView );
+	g_theRenderer->BindSampler( SAMPLE_MODE_POINT );
  	AddVertsForAABB2D( verts, AABB2( 10.f, 10.f, 100.f, 80.f ), Rgba( 1.f, 1.f, 1.f ), Vec2( 0.0f, 0.0f ), Vec2( 1.0f, 1.0f ) );
  	g_theRenderer->DrawVertexArray( (int) verts.size(), &verts[0] );
 	verts.clear();
 
-	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->BindTextureView( 0, nullptr );
 	AddVertsForLine2D( verts, Vec2( 10.0f, 90.0f ), Vec2( 150.0f, 10.0f ), 1.0f, Rgba( 1.0f, 0.1f, 0.1f ) );
 	AddVertsForDisc2D( verts, Vec2( 150.0f, 70.0f ), 20.0f, Rgba( 0.1f, 0.1f, 1.0f ) );
 	AddVertsForRing2D( verts, Vec2( 120.0f, 30.0f ), 15.0f, 3.0f, Rgba( 1.0f, 1.0f, 1.0f ), 5 );
@@ -118,9 +119,9 @@ void Game::GameRender() const
 
 
 	// Text of spriteSheets
-	static Texture* testTexture2 = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_SpriteSheet8x2.png" );
+	static TextureView2D* testTexture2 = g_theRenderer->CreateOrGetTextureViewFromFile( "Data/Images/Test_SpriteSheet8x2.png" );
 	
-	SpriteSheet spriteSheet( testTexture2, IntVec2( 8, 2 ) );
+	SpriteSheet spriteSheet( (TextureView*)testTexture2, IntVec2( 8, 2 ) );
 	Vec2 uvAtBottomLeft = Vec2(0.0f, 0.0f);
 	Vec2 uvAtTopRight = Vec2(1.0f, 1.0f);
 	SpriteDefinition sd = spriteSheet.GetSpriteDefinition( g_index );
@@ -128,7 +129,7 @@ void Game::GameRender() const
 	std::vector<Vertex_PCU> ssVerts;
 	AddVertsForAABB2D(ssVerts, AABB2( 85.f, 80.f, 90.f, 90 ), Rgba( 1.0f, 1.0f, 1.0f ), uvAtBottomLeft, uvAtTopRight );
 
-	g_theRenderer->BindTexture( spriteSheet.GetTexture() );
+	g_theRenderer->BindTextureView( 0, spriteSheet.GetTextureView() );
 	g_theRenderer->DrawVertexArray( ssVerts );
 
 	// Bitmap Test
@@ -140,7 +141,7 @@ void Game::GameRender() const
 	std::vector<Vertex_PCU> bmVerts;
 	g_testBitmap->AddVertsFor2DText( bmVerts, Vec2( 110.0f, 50.0f ), 5.0f, "HELLO, WORLD", .5f);
 
-	g_theRenderer->BindTexture( g_testBitmap->GetTexture() );
+	g_theRenderer->BindTextureView( 0, (TextureView*)g_testBitmap->GetTextureView() );
 	g_theRenderer->DrawVertexArray( bmVerts );
 
 
@@ -152,7 +153,7 @@ void Game::GameRender() const
 	ssVerts.clear();
 	AddVertsForAABB2D(ssVerts, AABB2( 95.f, 80.f, 100.f, 90 ), Rgba( 1.0f, 1.0f, 1.0f ), uvAtBottomLeft, uvAtTopRight );
 
-	g_theRenderer->BindTexture( spriteSheet.GetTexture() );
+	g_theRenderer->BindTextureView( 0, spriteSheet.GetTextureView() );
 	g_theRenderer->DrawVertexArray( ssVerts );
 
 	float x = SinDegrees( g_theApp->GetGlobleTime() * 360.f / 3.7f + 17.0f ) + .50f;
@@ -166,16 +167,41 @@ void Game::GameRender() const
 	AABB2 box2( 23.0f + x * 30.0f, 6.0f + y * 10.0f, Vec2(WORLD_WIDTH/2.0f + 60.0f, WORLD_HEIGHT/2.0f - 20.0f) );
 	AddVertsForAABB2D( ssVerts, box, Rgba::CYAN, Vec2::ZERO, Vec2::ONE );
 	AddVertsForAABB2D( ssVerts, box2, Rgba::BLUE, Vec2::ZERO, Vec2::ONE );
-	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->BindTextureView( 0, nullptr );
 	g_theRenderer->DrawVertexArray(ssVerts);
 
 	ssVerts.clear();
 	Vec2 alignment( x , y );
-	g_testBitmap->AddVertsFor2DTextAlignedInBox( ssVerts, g_pingPongTimer * 1.5f, "Hello!\ngood to go", box2, Vec2::ALIGN_CENTERED, UNCHANGED, 1.0f, Rgba( 1.0f, 0.0f, 0.0f, 0.5f ), g_printGlyphCount );
-	g_testBitmap->AddVertsFor2DTextAlignedInBox( ssVerts, g_pingPongTimer * 1.5f, "Hello!\ngood to go", box2, Vec2::ALIGN_CENTERED, SHRINK_TO_FIT, 1.0f, Rgba::BLACK, g_printGlyphCount );
- 	g_testBitmap->AddVertsFor2DTextAlignedInBox( ssVerts, 1.0f, "This is the\nTest for\nAlignment", box2, alignment, SHRINK_TO_FIT, 1.0f, Rgba::MAGENTA );
-	g_theRenderer->BindTexture( g_testBitmap->GetTexture() );
+	g_testBitmap->AddVertsFor2DTextAlignedInBox( ssVerts, g_pingPongTimer * 1.5f, "Hello!\ngood to go", box2, Vec2::ALIGN_CENTERED, BITMAP_MODE_UNCHANGED, 1.0f, Rgba( 1.0f, 0.0f, 0.0f, 0.5f ), g_printGlyphCount );
+	g_testBitmap->AddVertsFor2DTextAlignedInBox( ssVerts, g_pingPongTimer * 1.5f, "Hello!\ngood to go", box2, Vec2::ALIGN_CENTERED, BITMAP_MODE_SHRINK_TO_FIT, 1.0f, Rgba::BLACK, g_printGlyphCount );
+ 	g_testBitmap->AddVertsFor2DTextAlignedInBox( ssVerts, 1.0f, "This is the\nTest for\nAlignment", box2, alignment, BITMAP_MODE_SHRINK_TO_FIT, 1.0f, Rgba::MAGENTA );
+	g_theRenderer->BindTextureView( 0, g_testBitmap->GetTextureView() );
 	g_theRenderer->DrawVertexArray( ssVerts );
+
+	g_theRenderer->SetBlendMode( eBlendMode::BLEND_MODE_ADDITIVE );
+	g_theRenderer->BindShader( g_theRenderer->m_shader );
+
+	static TextureView2D* explosionTex = g_theRenderer->CreateOrGetTextureViewFromFile( "Data/Images/Explosion_5x5.png" );
+	SpriteSheet expSheet( (TextureView*)explosionTex, IntVec2( 5, 5 ) );
+	SpriteAnimDefinition expAnimDef( expSheet, 0, 24, 5.0f, SPRITE_ANIM_PLAYBACK_PINGPONG );
+	uvAtBottomLeft = Vec2(0.0f, 0.0f);
+	uvAtTopRight = Vec2(1.0f, 1.0f);
+	sd = expAnimDef.GetSpriteDefAtTime( g_theApp->GetGlobleTime() ); 
+	sd.GetUVs(uvAtBottomLeft, uvAtTopRight);
+	std::vector<Vertex_PCU> expVerts;
+	AABB2 expBox( 20, 20 );
+	expBox.AddPosition( 130, 80 );
+	AddVertsForAABB2D(expVerts, expBox, Rgba::WHITE, uvAtBottomLeft, uvAtTopRight );
+	expBox.AddPosition( 0, 5 );
+	AddVertsForAABB2D(expVerts, expBox , Rgba::WHITE, uvAtBottomLeft, uvAtTopRight );
+	expBox.AddPosition( 10 + 10 * SinDegrees( g_theApp->GetGlobleTime() * 80 ), 3);
+	AddVertsForAABB2D(expVerts, expBox, Rgba::WHITE, uvAtBottomLeft, uvAtTopRight );
+
+	g_theRenderer->BindTextureView( 0, expSheet.GetTextureView() );
+	g_theRenderer->DrawVertexArray( expVerts );
+
+	g_theRenderer->SetBlendMode( eBlendMode::BLEND_MODE_ALPHA );
+
 
 	// Debug
 	if( g_isInDebug )
@@ -220,7 +246,7 @@ void Game::UpdateGame( float deltaSeconds )
 */
 void Game::RenderDebug() const
 {
-	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->BindTextureView( 0, nullptr );
 	RenderDebugCosmetics();
 	RenderDebugPhysics();
 }

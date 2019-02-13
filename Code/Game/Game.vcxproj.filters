@@ -66,5 +66,8 @@
     <FxCompile Include="..\..\Run\Data\Shaders\vbo.hlsl">
       <Filter>Data\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\default_unlit.hlsl">
+      <Filter>Data\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
