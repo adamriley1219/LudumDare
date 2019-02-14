@@ -103,7 +103,7 @@ void Game::GameRender() const
 	
  	std::vector<Vertex_PCU> verts;
 	g_theRenderer->BindTextureView( 0, (TextureView*) testTextureView );
-	g_theRenderer->BindSampler( SAMPLE_MODE_POINT );
+	g_theRenderer->BindSampler( SAMPLE_MODE_LINEAR );
  	AddVertsForAABB2D( verts, AABB2( 10.f, 10.f, 100.f, 80.f ), Rgba( 1.f, 1.f, 1.f ), Vec2( 0.0f, 0.0f ), Vec2( 1.0f, 1.0f ) );
  	g_theRenderer->DrawVertexArray( (int) verts.size(), &verts[0] );
 	verts.clear();
