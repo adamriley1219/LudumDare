@@ -1,21 +1,23 @@
 RTS
 ======
 
-## Keyboard Controls
-H - help
+## DevConcole Input
 
-O - open console
-C - close console
-F - Fade console
+```
+- **~** - Turn Open Console
+- **`** - Turn Open Fading Console
+- **ESC** - Turn Off Console if open, Closes App if Console already closed.
 
-W - Run test Event in console
+```
 
-Press ESC to exit.
 
-## Do Later
+## Debugging Controls
+```
+- **H** - help
+- **W** - Run test Event in console
+- **ESC** - to exit.
 
-Protogame  ReadMe
-Made by Adam Riley
+```
 
 Once the game is running use the following controls to navagate your ship.
 --------------------------------------------------------------------------

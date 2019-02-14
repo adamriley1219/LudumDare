@@ -5,6 +5,8 @@
 #include <crtdbg.h>
 #include "Engine/Core/Time.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/NamedStrings.hpp"
 #include "Engine/Core/XMLUtils.hpp"
 #include "Engine/Core/EventSystem.hpp"
@@ -57,7 +59,10 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure( HWND windowHandle, UINT wmMess
 
 			if( asKey == VK_ESCAPE )
 			{
-				g_theEventSystem->FireEvent( "quit" );
+				if( !g_theConsole->HandleESCPress() )
+				{
+					g_theEventSystem->FireEvent( "quit" );
+				}
 				return 0; // "Consumes" this message (tells Windows "okay, we handled it")
 			}
 			break;
@@ -91,6 +96,14 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure( HWND windowHandle, UINT wmMess
 			// User has typed a character
 			// wparam - char code
 			// lparam - additional information (like ALT state)
+			unsigned char asKey = (unsigned char) wParam;
+			g_theApp->HandleCharPressed( asKey );
+
+			//TODO: Figure out how to access info
+// 			if( IsBitFlagSet( (unsigned char)lParam, VK_SHIFT ) )
+// 			{
+// 				int x = 0;
+// 			}
 			break;
 		} 
 	}

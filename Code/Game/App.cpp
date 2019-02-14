@@ -108,8 +108,14 @@ void App::RunFrame( float timeFrameBeganSec )
 */
 bool App::HandleKeyPressed( unsigned char keyCode )
 {
+	if( g_theConsole->HandleKeyPress( keyCode ) )
+	{
+		return true;
+	}
 	switch( keyCode )
 	{
+	case 192: // '~' press
+		break;
 	case 'P':
 		if(m_isPaused)
 			m_isPaused = false;
@@ -138,10 +144,27 @@ bool App::HandleKeyPressed( unsigned char keyCode )
 
 //--------------------------------------------------------------------------
 /**
+* HandleCharPressed
+*/
+bool App::HandleCharPressed( unsigned char keyCode )
+{
+	if( g_theConsole->HandleCharPress( keyCode ) )
+	{
+		return true;
+	}
+	return false;
+}
+
+//--------------------------------------------------------------------------
+/**
 * HandleKeyReleased
 */
 bool App::HandleKeyReleased( unsigned char keyCode )
 {
+	if( g_theConsole->HandleKeyReleased( keyCode ) )
+	{
+		return true;
+	}
 	switch( keyCode )
 	{
 	case 'T':
@@ -152,18 +175,6 @@ bool App::HandleKeyReleased( unsigned char keyCode )
 		break;
 	case 'H':
 		g_theEventSystem->FireEvent( "help" );
-		break;
-	case 'O':
-		g_theConsole->SetState(FULLY_OPEN);
-		g_theConsole->PrintString( "Opened Console", Rgba::GREEN );
-		break;
-	case 'C':
-		g_theConsole->SetState(CLOSED);
-		g_theConsole->PrintString( "closed Console", Rgba::RED );
-		break;
-	case 'F':
-		g_theConsole->SetState(FADE_AWAY);
-		g_theConsole->PrintString( "Fade Console", Rgba::MAGENTA );
 		break;
 	default:
 		break;

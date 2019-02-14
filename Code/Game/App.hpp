@@ -18,6 +18,7 @@ public:
 
 	bool IsQuitting() const { return m_isQuitting; }
 	bool HandleKeyPressed( unsigned char keyCode );
+	bool HandleCharPressed( unsigned char keyCode );
 	bool HandleKeyReleased( unsigned char keyCode );
 	bool HandleQuitRequested();
 

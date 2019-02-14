@@ -61,7 +61,6 @@ static int g_index = 0;
 */
 bool Game::HandleKeyPressed( unsigned char keyCode )
 {
-	UNUSED(keyCode);
 	if( keyCode == 'O' )
 	{
 		g_index = ++g_index % ( 8 * 2 );
@@ -201,6 +200,7 @@ void Game::GameRender() const
 	g_theRenderer->DrawVertexArray( expVerts );
 
 	g_theRenderer->SetBlendMode( eBlendMode::BLEND_MODE_ALPHA );
+	g_theRenderer->BindShader( g_theRenderer->m_shader );
 
 
 	// Debug
