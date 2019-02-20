@@ -203,6 +203,24 @@ void Game::GameRender() const
 	g_theRenderer->BindShader( g_theRenderer->m_shader );
 
 
+	std::vector<Vertex_PCU> triVerts;
+	Vec3 pointBL_pos( 0	, 0, 0.0f );
+	Vec3 pointBR_pos( WORLD_WIDTH , 0, 0.0f );
+	Vec3 pointTR_pos( WORLD_WIDTH , WORLD_HEIGHT, 0.0f );
+	Vec2 pointBL_UVs = Vec2::ONE;
+	Vec2 pointBR_UVs = Vec2::ONE;
+	Vec2 pointTR_UVs = Vec2::ONE;
+	Vertex_PCU pointBL( pointBL_pos, Rgba::WHITE, pointBL_UVs );
+	Vertex_PCU pointBR( pointBR_pos, Rgba::WHITE, pointBR_UVs );
+	Vertex_PCU pointTR( pointTR_pos, Rgba::WHITE, pointTR_UVs );
+	triVerts.push_back( pointBL );
+	triVerts.push_back( pointBR );
+	triVerts.push_back( pointTR );
+
+
+	g_theRenderer->BindTextureView( 0, nullptr );
+	g_theRenderer->DrawVertexArray(triVerts);
+
 	// Debug
 	if( g_isInDebug )
 	{
