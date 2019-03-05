@@ -5,6 +5,7 @@ class Shader;
 
 class Game
 {
+	friend App;
 public:
 	Game();
 	~Game();
@@ -18,18 +19,15 @@ public:
 	void GameRender() const;
 	void UpdateGame( float deltaSeconds );
 
-	float GetScreenShakeIntensity() { return m_screenShakeIntensity; };
-	void ShakeScreen( float shake );
-
 private:
 	//Render
 	void RenderDebug() const;
 	void RenderDebugCosmetics() const;
 	void RenderDebugPhysics() const;
+	void RenderDevConsole() const;
 
 	//Update
-	void UpdateShakeReduction( float deltaSeconds );
-
+	void UpdateCamera( float deltaSeconds );
 
 private:
 	void ResetGame();
@@ -40,9 +38,8 @@ private:
 private:
 	bool m_isQuitting = false;
 
-	// Quality of life variables
-	float m_screenShakeIntensity = 0.0f;
-	float m_shakeSpeedReduction = 2.0f;
-
 	Shader* m_shader;
+
+	Camera m_CurentCamera;
+	mutable Camera m_DevColsoleCamera;
 };

@@ -42,9 +42,5 @@ private:
 	bool m_isFastMo = false;
 	float m_time = 0;
 	float m_consoleTextHeight = 2.0f;
-	Camera m_camera;
 
-	// For Debugging
-	float timer = 0.0f;
-	Rgba clearColor = Rgba::RED;
 };

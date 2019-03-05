@@ -40,8 +40,12 @@ Game::~Game()
 */
 void Game::Startup()
 {
-	m_shader = g_theRenderer->CreateOrGetShaderFromFile( "Data/Shaders/default_unlit.hlsl" );
+	m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/shader.xml" );
 	g_theRenderer->m_shader = m_shader;
+
+	m_DevColsoleCamera.SetOrthographicProjection( Vec2( -100.0f, -50.0f ), Vec2( 100.0f,  50.0f ) );
+	m_DevColsoleCamera.SetModelMatrix( Matrix44::IDENTITY );
+
 }
 
 //--------------------------------------------------------------------------
@@ -234,7 +238,6 @@ void Game::GameRender() const
 */
 void Game::UpdateGame( float deltaSeconds )
 {
-	UpdateShakeReduction( deltaSeconds );
 	static bool swapper = true;
 	if( g_pingPongTimer < 0.0f || g_pingPongTimer > 7.0f )
 	{
@@ -255,6 +258,9 @@ void Game::UpdateGame( float deltaSeconds )
 	{
 		g_charTimer = 0.0f;
 	}
+
+	UpdateCamera( deltaSeconds );
+
 }
 
 
@@ -267,6 +273,8 @@ void Game::RenderDebug() const
 	g_theRenderer->BindTextureView( 0, nullptr );
 	RenderDebugCosmetics();
 	RenderDebugPhysics();
+	g_theRenderer->EndCamera();
+	RenderDevConsole();
 }
 
 //--------------------------------------------------------------------------
@@ -290,12 +298,28 @@ void Game::RenderDebugPhysics() const
 
 //--------------------------------------------------------------------------
 /**
-* ShakeScreen
+* RenderDevConsole
 */
-void Game::ShakeScreen( float shake )
+void Game::RenderDevConsole() const
 {
-	m_screenShakeIntensity = shake;
+	g_theConsole->Render( g_theRenderer, m_DevColsoleCamera, 10 );
 }
+
+//--------------------------------------------------------------------------
+/**
+* UpdateCamera
+*/
+void Game::UpdateCamera( float deltaSeconds )
+{
+	UNUSED( deltaSeconds );
+	m_CurentCamera.SetModelMatrix( Matrix44::IDENTITY );
+//	m_CurentCamera.SetPerspectiveProjection( 60.f, WORLD_WIDTH / WORLD_HEIGHT );
+	m_CurentCamera.SetOrthographicProjection( Vec2(), Vec2(WORLD_WIDTH, WORLD_HEIGHT) );
+	m_CurentCamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
+	m_CurentCamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
+	g_theRenderer->BeginCamera( &m_CurentCamera );
+}
+
 
 //--------------------------------------------------------------------------
 /**
@@ -324,16 +348,3 @@ void Game::DeconstructGame()
 {
 
 }
-
-//--------------------------------------------------------------------------
-/**
-* UpdateGameHandleShakeReduction
-*/
-void Game::UpdateShakeReduction( float deltaSeconds )
-{
-	// Shake Logic - NOTE: Shake will occur on death of player. No other logic after shake update.
-	m_screenShakeIntensity -= m_shakeSpeedReduction * deltaSeconds;
-	if( m_screenShakeIntensity < 0.0f )
-		m_screenShakeIntensity = 0.0f;
-}
-

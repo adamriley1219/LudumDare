@@ -21,6 +21,9 @@ extern RNG* g_theRNG;
 class Game;
 extern Game* g_theGame;
 
+class WindowContext;
+extern WindowContext* g_theWindowContext;
+
 extern bool g_isInDebug;
 
 //--------------------------------------------------------------------------

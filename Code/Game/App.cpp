@@ -7,6 +7,7 @@
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EventSystem.hpp"
+#include "Engine/Physics/PhysicsSystem.hpp"
 #include "Game/GameCommon.hpp"
 
 //--------------------------------------------------------------------------
@@ -18,9 +19,10 @@ AudioSystem* g_theAudioSystem = nullptr;
 App* g_theApp = nullptr;					// Created and owned by Main_Windows.cpp
 bool g_isInDebug = false;
 RNG* g_theRNG = nullptr;
+PhysicsSystem* g_thePhysicsSystem = nullptr;
 Game* g_theGame = nullptr;
+WindowContext* g_theWindowContext = nullptr;
 
-extern void* g_hWnd;
 
 //--------------------------------------------------------------------------
 /**
@@ -31,14 +33,16 @@ void App::Startup()
 	g_theRNG = new RNG();
 	g_theEventSystem = new EventSystem();
 	g_theConsole = new DevConsole( "SquirrelFixedFont" );
-	g_theRenderer = new RenderContext( g_hWnd );
+	g_theRenderer = new RenderContext( g_theWindowContext );
 	g_theInputSystem = new InputSystem();
 	g_theAudioSystem = new AudioSystem();
+	g_thePhysicsSystem = new PhysicsSystem();
 	g_theGame = new Game();
 
 	g_theEventSystem->Startup();
-	g_theConsole->Startup();
 	g_theRenderer->Startup();
+	g_theConsole->Startup();
+	g_thePhysicsSystem->Startup();
 	g_theGame->Startup();
 
 	RegisterEvents();
@@ -51,8 +55,9 @@ void App::Startup()
 void App::Shutdown()
 {
 	g_theGame->Shutdown();
-	g_theRenderer->Shutdown();
+	g_thePhysicsSystem->Shutdown();
 	g_theConsole->Shutdown();
+	g_theRenderer->Shutdown();
 	g_theEventSystem->Shutdown();
 
 	delete g_theGame;
@@ -115,31 +120,37 @@ bool App::HandleKeyPressed( unsigned char keyCode )
 	switch( keyCode )
 	{
 	case 192: // '~' press
+
 		break;
 	case 'P':
 		if(m_isPaused)
 			m_isPaused = false;
 		else
 			m_isPaused = true;
+		return true;
 		break;
 	case 'T':
 		m_isSlowMo = true;
+		return true;
 		break;
 	case 'Y':
 		m_isFastMo = true;
+		return true;
 		break;
 	case 'w': // F8 press
 		delete g_theGame;
 		g_theGame = new Game();
+		return true;
 		break;
 	case 'p': // F1 press
 		ToggleDebug();
+		return true;
 		break;
 	default:
-		g_theGame->HandleKeyPressed( keyCode );
+		return g_theGame->HandleKeyPressed( keyCode );
 		break;
 	}
-	return true;
+	return false;
 }
 
 //--------------------------------------------------------------------------
@@ -177,6 +188,7 @@ bool App::HandleKeyReleased( unsigned char keyCode )
 		g_theEventSystem->FireEvent( "help" );
 		break;
 	default:
+		return g_theGame->HandleKeyReleased( keyCode );
 		break;
 	}
 	return true;
@@ -224,10 +236,6 @@ void App::BeginFrame()
 	g_theInputSystem->	BeginFrame();
 	g_theAudioSystem->	BeginFrame();
 
-	m_camera.SetOrthoView( Vec2( 0.0f, 0.0f ), Vec2( WORLD_WIDTH, WORLD_HEIGHT ) );
-	CameraShake2D( m_camera, g_theGame->GetScreenShakeIntensity() );
-	m_camera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
-	g_theRenderer->BeginCamera( &m_camera );
 }
 
 
@@ -237,26 +245,6 @@ void App::BeginFrame()
 */
 void App::Update( float deltaSeconds )
 {
-	timer += deltaSeconds;
-
-	if( timer > 1.0f )
-	{
-		timer = 0.0f;
-		if( clearColor == Rgba::RED )
-		{
-			clearColor = Rgba::GREEN;
-		}
-		else if( clearColor == Rgba::GREEN )
-		{
-			clearColor = Rgba::BLUE;
-		}
-		else
-		{
-			clearColor = Rgba::RED;
-		}
-	}
-	
-
 	g_theConsole->	Update( m_time );
 	g_theGame->		UpdateGame( deltaSeconds );
 }
@@ -275,11 +263,11 @@ void App::RenderDebugLeftJoystick() const
 	if( !curController.IsConnected() )
 		return;
 	const AnalogJoystick& curLJoystick = curController.GetLeftJoystick();
-	const Vec2& upRightRef = m_camera.GetOrthoTopRight();
+	const Vec2& upRightRef = g_theGame->m_DevColsoleCamera.GetOrthoTopRight();
 
 	Vec3 center
 	(	
-			upRightRef.x - inRangex - outerRadius
+		upRightRef.x - inRangex - outerRadius
 		,	upRightRef.y - inRangey - outerRadius
 		,	0.0f
 	);
@@ -329,7 +317,7 @@ void App::Render() const
 		RenderDebugLeftJoystick();
 	}
 	g_theGame->		GameRender();
-	g_theConsole->	Render( g_theRenderer, m_camera, m_consoleTextHeight );
+	g_theConsole->	Render( g_theRenderer, g_theGame->m_DevColsoleCamera, m_consoleTextHeight );
 }
 
 //--------------------------------------------------------------------------
@@ -343,8 +331,6 @@ void App::EndFrame()
 	g_theInputSystem->	EndFrame();
 	g_theRenderer->		EndFrame();
 	g_theEventSystem->	EndFrame();
-
-	g_theRenderer->		EndCamera();
 }
 
 //--------------------------------------------------------------------------

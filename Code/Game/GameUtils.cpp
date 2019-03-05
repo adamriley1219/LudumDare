@@ -56,19 +56,3 @@ float GetRandomlyChosenFloat( float a, float b )
 	return b;
 }
 
-//--------------------------------------------------------------------------
-/**
-* Shake
-*/
-void CameraShake2D( Camera& camraToShake, float shakeIntensity )
-{
-	float randomFloatx = g_theRNG->GetRandomFloatInRange(-1.0f, 1.0f);
-	float randomFloaty = g_theRNG->GetRandomFloatInRange(-1.0f, 1.0f);
-	Vec2 botLeft = camraToShake.GetOrthoBottomLeft();
-	Vec2 topRight = camraToShake.GetOrthoTopRight();
-	botLeft.x += shakeIntensity * randomFloatx;
-	botLeft.y += shakeIntensity * randomFloaty;
-	topRight.x += shakeIntensity * randomFloatx;
-	topRight.y += shakeIntensity * randomFloaty;
-	camraToShake.SetOrthoView( botLeft, topRight );
-}
