@@ -4,6 +4,7 @@
 #include "Engine/Renderer/SpriteDefinition.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Shaders/Shader.hpp"
+#include "Engine/Renderer/Material.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec2.hpp"
@@ -13,6 +14,13 @@
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/App.hpp"
+#include "Engine/Core/Time.hpp"
+#include "Engine/Core/MeshCPU.hpp"
+#include "Engine/Renderer/MeshGPU.hpp"
+#include "Engine/Core/WindowContext.hpp"
+#include "Engine/Renderer/Debug/DebugRenderSystem.hpp"
+#include "Engine/Core/Vertex/Vertex_LIT.hpp"
+#include "Game/Map.hpp"
 #include <vector>
 
 #include <Math.h>
@@ -22,7 +30,7 @@
 */
 Game::Game()
 {
-	ConstructGame();
+
 }
 
 //--------------------------------------------------------------------------
@@ -31,7 +39,7 @@ Game::Game()
 */
 Game::~Game()
 {
-	DeconstructGame();
+
 }
 
 //--------------------------------------------------------------------------
@@ -40,12 +48,86 @@ Game::~Game()
 */
 void Game::Startup()
 {
-	m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/shader.xml" );
-	g_theRenderer->m_shader = m_shader;
+	m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/default_lit.xml" );
+	g_theRenderer->BindShader( m_shader );
+	
+	g_theWindowContext->LockMouse();
+	g_theWindowContext->HideMouse();
+	g_theWindowContext->SetMouseMode( MOUSE_MODE_RELATIVE );
+
+	MeshCPU meshCPU;
+	CPUMeshAddCube( &meshCPU, AABB3( 2.0f, 2.0f, 2.0f ) );
+	meshSquareGPU = new MeshGPU( g_theRenderer );
+	meshSquareGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
+
+	meshCPU.Clear();
+	CPUMeshAddUVSphere( &meshCPU, Vec3::ZERO, 1.5f );
+	meshSphereGPU = new MeshGPU( g_theRenderer );
+	meshSphereGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
+
+	meshCPU.Clear();
+	CPUMeshAddPlain( &meshCPU, AABB2( 2.0f, 2.0f ) );
+	meshPlainGPU = new MeshGPU( g_theRenderer );
+	meshPlainGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
 
 	m_DevColsoleCamera.SetOrthographicProjection( Vec2( -100.0f, -50.0f ), Vec2( 100.0f,  50.0f ) );
 	m_DevColsoleCamera.SetModelMatrix( Matrix44::IDENTITY );
+	
+	m_UICamera.SetOrthographicProjection( Vec2( -100.0f, -50.0f ), Vec2( 100.0f,  50.0f ) );
+	m_UICamera.SetModelMatrix( Matrix44::IDENTITY );
 
+	EventArgs args;
+	g_theDebugRenderSystem->Command_Open( args );
+
+	g_theRenderer->SetAmbientLight( Rgba::WHITE, m_curAmbiant );
+	g_theRenderer->SetSpecFactor( m_specFact );
+	g_theRenderer->SetSpecPower( m_specPow );
+
+	LightData light;
+	light.is_direction = 1.0f;
+	light.color = Rgba(1.0f, 1.0f, 1.0f, 1.0f);
+	light.color.a = 1.0f;
+	light.direction = Vec3( -1.0f, -1.0f, 1.0f ).GetNormalized();
+	light.position = Vec3::ZERO;
+	g_theRenderer->EnableLight( 0, light );
+
+	light.is_direction = 0.0f;
+	light.color = Rgba::CYAN;
+	light.color.a = 0.0f;
+	g_theRenderer->EnableLight( 1, light );
+	
+	light.is_direction = 0.0f;
+	light.color = Rgba::BLUE;
+	light.color.a = 0.0f;
+	g_theRenderer->EnableLight( 2, light );
+
+	light.is_direction = 0.0f;
+	light.color = Rgba::MAGENTA;
+	light.color.a = 0.0f;
+	g_theRenderer->EnableLight( 3, light );
+
+	light.is_direction = 0.0f;
+	light.color = Rgba::GREEN;
+	light.color.a = 0.0f;
+	g_theRenderer->EnableLight( 4, light );
+
+	g_theRenderer->SetSpecFactor( m_specFact );
+	g_theRenderer->SetSpecPower( m_specPow );
+	g_theRenderer->SetEmissiveFactor( m_emissiveFac );
+	g_theRenderer->SetAmbientLight( Rgba::WHITE, m_curAmbiant );
+
+
+	g_theEventSystem->SubscribeEventCallbackFunction( "setDirColor", Command_SetDirColor );
+
+	m_couchMat = g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/couch.mat" );
+	matStruct my_struct;
+	my_struct.var = .7f;
+	my_struct.padding = Vec3(0.0f, 0.0f, 0.0f); 
+	m_couchMat->SetUniforms( &my_struct, sizeof(my_struct) );
+
+	Map* editMap =  new Map( g_theRenderer );
+	editMap->Load( "UNUNSED RIGHT NOW" );
+	m_maps.push_back( editMap );
 }
 
 //--------------------------------------------------------------------------
@@ -54,10 +136,19 @@ void Game::Startup()
 */
 void Game::Shutdown()
 {
+	delete meshSquareGPU;
+	meshSquareGPU = nullptr;
+	delete meshSphereGPU;
+	meshSphereGPU = nullptr;
+	delete meshPlainGPU;
+	meshPlainGPU = nullptr;
 
+	for( Map* map : m_maps )
+	{
+		delete map;
+		map = nullptr;
+	}
 }
-
-static int g_index = 0;
 
 //--------------------------------------------------------------------------
 /**
@@ -65,16 +156,143 @@ static int g_index = 0;
 */
 bool Game::HandleKeyPressed( unsigned char keyCode )
 {
-	if( keyCode == 'O' )
+	if( keyCode == 'N' )
 	{
-		g_index = ++g_index % ( 8 * 2 );
+		++shaderType;
+		switch( shaderType )
+		{
+		case 0:
+			m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/default_lit.xml" );
+			break;
+		case 1:
+			m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/normal.xml" );
+			break;
+		case 2:
+			m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/tangent.xml" );
+			break;
+		case 3:
+			m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/bitangent.xml" );
+			break;
+		default:
+			shaderType = 0;
+			m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/default_lit.xml" );
+			break;
+		}
 	}
+	//--------------------------------------------------------------------------
+	if( keyCode == 'J' )
+	{
+		m_specPow += 0.05f;
+		m_specPow = Clamp( m_specPow, 0.0f, 99.0f );
+		g_theRenderer->SetSpecPower( m_specPow );
+	}
+	if( keyCode == 'H' )
+	{
+		m_specPow -= 0.05f;
+		m_specPow = Clamp( m_specPow, 0.0f, 99.0f );
+		g_theRenderer->SetSpecPower( m_specPow );
+	}	
+	//--------------------------------------------------------------------------
+	if( keyCode == 190 ) // '.'
+	{
+		m_specFact += 0.01f;
+		m_specFact = Clamp( m_specFact, 0.0f, 1.0f );
+		g_theRenderer->SetSpecFactor( m_specFact );
+	}
+	if( keyCode == 188 ) // ','
+	{
+		m_specFact -= 0.01f;
+		m_specFact = Clamp( m_specFact, 0.0f, 1.0f );
+		g_theRenderer->SetSpecFactor( m_specFact );
+	}	
+	//--------------------------------------------------------------------------
+	if( keyCode == 'L' )
+	{
+		m_curAmbiant += 0.01f;
+		m_curAmbiant = Clamp( m_curAmbiant, 0.0f, 1.0f );
+		g_theRenderer->SetAmbientLight( Rgba::WHITE, m_curAmbiant );
+	}
+	if( keyCode == 'K' )
+	{
+		m_curAmbiant -= 0.01f;
+		m_curAmbiant = Clamp( m_curAmbiant, 0.0f, 1.0f );
+		g_theRenderer->SetAmbientLight( Rgba::WHITE, m_curAmbiant );
+	}
+	//--------------------------------------------------------------------------
+	if( keyCode == 'G' )
+	{
+		m_emissiveFac += 0.01f;
+		m_emissiveFac = Clamp( m_emissiveFac, 0.0f, 1.0f );
+		g_theRenderer->SetEmissiveFactor( m_emissiveFac );
+	}
+	if( keyCode == 'F' )
+	{
+		m_emissiveFac -= 0.01f;
+		m_emissiveFac = Clamp( m_emissiveFac, 0.0f, 1.0f );
+		g_theRenderer->SetEmissiveFactor( m_emissiveFac );
+	}
+
+	//--------------------------------------------------------------------------
+	if( keyCode == 'B' )
+	{
+		LightData light = g_theRenderer->GetLightAtSlot( 1 );
+		light.position = m_camPos;
+		g_theRenderer->EnableLight( 1, light );
+	}
+	if( keyCode == 'V' )
+	{
+		LightData light = g_theRenderer->GetLightAtSlot( 0 );
+		light.direction = m_curentCamera.GetForward();
+		g_theRenderer->EnableLight( 0, light );
+	}
+	if( keyCode == 'X' )
+	{
+		LightData light = g_theRenderer->GetLightAtSlot( 0 );
+		light.color.a = 0.0f;
+		g_theRenderer->EnableLight( 0, light );
+	}
+	//--------------------------------------------------------------------------
+	if( keyCode == 222 ) // '''
+	{
+		++m_actLights;
+		m_actLights = Clamp( (int) m_actLights, 0, 8 );
+	}
+	if( keyCode == 186 ) // ';'
+	{
+		--m_actLights;
+		m_actLights = Clamp( (int) m_actLights, 0, 8 );
+	}
+
+	//--------------------------------------------------------------------------
 	if( keyCode == 'W' )
 	{
-		EventArgs args;
-		g_theEventSystem->FireEvent( "test" );
-		g_theEventSystem->FireEvent( "test", args );
-		g_theConsole->PrintString( args.GetValue( "test1", "NOT FOUND" ), DevConsole::CONSOLE_INFO );
+		input.z = 1.0f;
+		return true;
+	}
+	if( keyCode == 'S' )
+	{
+		input.z = -1.0f;
+		return true;
+	}
+	if( keyCode == 'E' )
+	{
+		input.y = 1.0f;
+		return true;
+	}
+	if( keyCode == 'Q' )
+	{
+		input.y = -1.0f;
+		return true;
+	}
+	if( keyCode == 'A' )
+	{
+		input.x = -1.0f;
+		return true;
+	}
+	if( keyCode == 'D' )
+	{
+		input.x = 1.0f;
+		return true;
 	}
 	return false;
 }
@@ -86,150 +304,38 @@ bool Game::HandleKeyPressed( unsigned char keyCode )
 bool Game::HandleKeyReleased( unsigned char keyCode )
 {
 	UNUSED(keyCode);
+	if( keyCode == 'W' )
+	{
+		input.z = 0;
+		m_camPos += m_curentCamera.GetForward() * 0.1f;
+		return true;
+	}
+	if( keyCode == 'S' )
+	{
+		input.z = 0;
+		return true;
+	}
+	if( keyCode == 'E' )
+	{
+		input.y = 0;
+		return true;
+	}
+	if( keyCode == 'Q' )
+	{
+		input.y = 0;
+		return true;
+	}
+	if( keyCode == 'A' )
+	{
+		input.x = 0;
+		return true;
+	}
+	if( keyCode == 'D' )
+	{
+		input.x = 0;
+		return true;
+	}
 	return false;
-}
-
-
-BitmapFont* g_testBitmap = nullptr;
-float g_pingPongTimer = 0.0f;
-int g_printGlyphCount = 0;
-float g_charTimer = 0.0f;
-
-//--------------------------------------------------------------------------
-/**
-* GameRender
-*/
-void Game::GameRender() const
-{
-	g_theRenderer->BindShader( m_shader );
-
-	static TextureView2D* testTextureView = g_theRenderer->CreateOrGetTextureViewFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
-	
- 	std::vector<Vertex_PCU> verts;
-	g_theRenderer->BindTextureView( 0, (TextureView*) testTextureView );
-	g_theRenderer->BindSampler( SAMPLE_MODE_LINEAR );
- 	AddVertsForAABB2D( verts, AABB2( 10.f, 10.f, 100.f, 80.f ), Rgba( 1.f, 1.f, 1.f ), Vec2( 0.0f, 0.0f ), Vec2( 1.0f, 1.0f ) );
- 	g_theRenderer->DrawVertexArray( (int) verts.size(), &verts[0] );
-	verts.clear();
-
-	g_theRenderer->BindTextureView( 0, nullptr );
-	AddVertsForLine2D( verts, Vec2( 10.0f, 90.0f ), Vec2( 150.0f, 10.0f ), 1.0f, Rgba( 1.0f, 0.1f, 0.1f ) );
-	AddVertsForDisc2D( verts, Vec2( 150.0f, 70.0f ), 20.0f, Rgba( 0.1f, 0.1f, 1.0f ) );
-	AddVertsForRing2D( verts, Vec2( 120.0f, 30.0f ), 15.0f, 3.0f, Rgba( 1.0f, 1.0f, 1.0f ), 5 );
-	AddVertsForRing2D( verts, Vec2( 145.0f, 30.0f ), 10.0f, 1.0f, Rgba( 0.4f, 1.0f, 0.4f ) );
-
- 	g_theRenderer->DrawVertexArray( (int) verts.size(), &verts[0] );
-
-
-	// Text of spriteSheets
-	static TextureView2D* testTexture2 = g_theRenderer->CreateOrGetTextureViewFromFile( "Data/Images/Test_SpriteSheet8x2.png" );
-	
-	SpriteSheet spriteSheet( (TextureView*)testTexture2, IntVec2( 8, 2 ) );
-	Vec2 uvAtBottomLeft = Vec2(0.0f, 0.0f);
-	Vec2 uvAtTopRight = Vec2(1.0f, 1.0f);
-	SpriteDefinition sd = spriteSheet.GetSpriteDefinition( g_index );
-	sd.GetUVs(uvAtBottomLeft, uvAtTopRight);
-	std::vector<Vertex_PCU> ssVerts;
-	AddVertsForAABB2D(ssVerts, AABB2( 85.f, 80.f, 90.f, 90 ), Rgba( 1.0f, 1.0f, 1.0f ), uvAtBottomLeft, uvAtTopRight );
-
-	g_theRenderer->BindTextureView( 0, spriteSheet.GetTextureView() );
-	g_theRenderer->DrawVertexArray( ssVerts );
-
-	// Bitmap Test
-	if( !g_testBitmap )
-	{
-		g_testBitmap = g_theRenderer->CreateOrGetBitmapFromFile( "SquirrelFixedFont" );
-	}
-
-	std::vector<Vertex_PCU> bmVerts;
-	g_testBitmap->AddVertsFor2DText( bmVerts, Vec2( 110.0f, 50.0f ), 5.0f, "HELLO, WORLD", .5f);
-
-	g_theRenderer->BindTextureView( 0, (TextureView*)g_testBitmap->GetTextureView() );
-	g_theRenderer->DrawVertexArray( bmVerts );
-
-
-	SpriteAnimDefinition spriteAnimDef( spriteSheet, 0, 15, 30.0f, SPRITE_ANIM_PLAYBACK_PINGPONG );
-	uvAtBottomLeft = Vec2(0.0f, 0.0f);
-	uvAtTopRight = Vec2(1.0f, 1.0f);
-	sd = spriteAnimDef.GetSpriteDefAtTime( g_theApp->GetGlobleTime() ); 
-	sd.GetUVs(uvAtBottomLeft, uvAtTopRight);
-	ssVerts.clear();
-	AddVertsForAABB2D(ssVerts, AABB2( 95.f, 80.f, 100.f, 90 ), Rgba( 1.0f, 1.0f, 1.0f ), uvAtBottomLeft, uvAtTopRight );
-
-	g_theRenderer->BindTextureView( 0, spriteSheet.GetTextureView() );
-	g_theRenderer->DrawVertexArray( ssVerts );
-
-	float x = SinDegrees( g_theApp->GetGlobleTime() * 360.f / 3.7f + 17.0f ) + .50f;
-	x = x > 0.0f ? x : 0.0f;
-	x = x < 1.0f ? x : 1.0f;
-	float y = CosDegrees( g_theApp->GetGlobleTime() * 360.0f / 4.0f ) + .50f;
-	y = y > 0.0f ? y : 0.0f;
-	y = y < 1.0f ? y : 1.0f;
-	ssVerts.clear();
-	AABB2 box( 25.0f + x * 30.0f, 8.0f + y * 10.0f , Vec2(WORLD_WIDTH/2.0f + 60.0f, WORLD_HEIGHT/2.0f - 20.0f) );
-	AABB2 box2( 23.0f + x * 30.0f, 6.0f + y * 10.0f, Vec2(WORLD_WIDTH/2.0f + 60.0f, WORLD_HEIGHT/2.0f - 20.0f) );
-	AddVertsForAABB2D( ssVerts, box, Rgba::CYAN, Vec2::ZERO, Vec2::ONE );
-	AddVertsForAABB2D( ssVerts, box2, Rgba::BLUE, Vec2::ZERO, Vec2::ONE );
-	g_theRenderer->BindTextureView( 0, nullptr );
-	g_theRenderer->DrawVertexArray(ssVerts);
-
-	ssVerts.clear();
-	Vec2 alignment( x , y );
-	g_testBitmap->AddVertsFor2DTextAlignedInBox( ssVerts, g_pingPongTimer * 1.5f, "Hello!\ngood to go", box2, Vec2::ALIGN_CENTERED, BITMAP_MODE_UNCHANGED, 1.0f, Rgba( 1.0f, 0.0f, 0.0f, 0.5f ), g_printGlyphCount );
-	g_testBitmap->AddVertsFor2DTextAlignedInBox( ssVerts, g_pingPongTimer * 1.5f, "Hello!\ngood to go", box2, Vec2::ALIGN_CENTERED, BITMAP_MODE_SHRINK_TO_FIT, 1.0f, Rgba::BLACK, g_printGlyphCount );
- 	g_testBitmap->AddVertsFor2DTextAlignedInBox( ssVerts, 1.0f, "This is the\nTest for\nAlignment", box2, alignment, BITMAP_MODE_SHRINK_TO_FIT, 1.0f, Rgba::MAGENTA );
-	g_theRenderer->BindTextureView( 0, g_testBitmap->GetTextureView() );
-	g_theRenderer->DrawVertexArray( ssVerts );
-
-	g_theRenderer->SetBlendMode( eBlendMode::BLEND_MODE_ADDITIVE );
-	g_theRenderer->BindShader( g_theRenderer->m_shader );
-
-	static TextureView2D* explosionTex = g_theRenderer->CreateOrGetTextureViewFromFile( "Data/Images/Explosion_5x5.png" );
-	SpriteSheet expSheet( (TextureView*)explosionTex, IntVec2( 5, 5 ) );
-	SpriteAnimDefinition expAnimDef( expSheet, 0, 24, 5.0f, SPRITE_ANIM_PLAYBACK_PINGPONG );
-	uvAtBottomLeft = Vec2(0.0f, 0.0f);
-	uvAtTopRight = Vec2(1.0f, 1.0f);
-	sd = expAnimDef.GetSpriteDefAtTime( g_theApp->GetGlobleTime() ); 
-	sd.GetUVs(uvAtBottomLeft, uvAtTopRight);
-	std::vector<Vertex_PCU> expVerts;
-	AABB2 expBox( 20, 20 );
-	expBox.AddPosition( 130, 80 );
-	AddVertsForAABB2D(expVerts, expBox, Rgba::WHITE, uvAtBottomLeft, uvAtTopRight );
-	expBox.AddPosition( 0, 5 );
-	AddVertsForAABB2D(expVerts, expBox , Rgba::WHITE, uvAtBottomLeft, uvAtTopRight );
-	expBox.AddPosition( 10 + 10 * SinDegrees( g_theApp->GetGlobleTime() * 80 ), 3);
-	AddVertsForAABB2D(expVerts, expBox, Rgba::WHITE, uvAtBottomLeft, uvAtTopRight );
-
-	g_theRenderer->BindTextureView( 0, expSheet.GetTextureView() );
-	g_theRenderer->DrawVertexArray( expVerts );
-
-	g_theRenderer->SetBlendMode( eBlendMode::BLEND_MODE_ALPHA );
-	g_theRenderer->BindShader( g_theRenderer->m_shader );
-
-
-	std::vector<Vertex_PCU> triVerts;
-	Vec3 pointBL_pos( 0	, 0, 0.0f );
-	Vec3 pointBR_pos( WORLD_WIDTH , 0, 0.0f );
-	Vec3 pointTR_pos( WORLD_WIDTH , WORLD_HEIGHT, 0.0f );
-	Vec2 pointBL_UVs = Vec2::ONE;
-	Vec2 pointBR_UVs = Vec2::ONE;
-	Vec2 pointTR_UVs = Vec2::ONE;
-	Vertex_PCU pointBL( pointBL_pos, Rgba::WHITE, pointBL_UVs );
-	Vertex_PCU pointBR( pointBR_pos, Rgba::WHITE, pointBR_UVs );
-	Vertex_PCU pointTR( pointTR_pos, Rgba::WHITE, pointTR_UVs );
-	triVerts.push_back( pointBL );
-	triVerts.push_back( pointBR );
-	triVerts.push_back( pointTR );
-
-
-	g_theRenderer->BindTextureView( 0, nullptr );
-	g_theRenderer->DrawVertexArray(triVerts);
-
-	// Debug
-	if( g_isInDebug )
-	{
-		RenderDebug();
-	}
 }
 
 //--------------------------------------------------------------------------
@@ -238,71 +344,126 @@ void Game::GameRender() const
 */
 void Game::UpdateGame( float deltaSeconds )
 {
-	static bool swapper = true;
-	if( g_pingPongTimer < 0.0f || g_pingPongTimer > 7.0f )
+	m_gameTime += deltaSeconds;
+	IntVec2 rawMouseMovement = g_theWindowContext->GetClientMouseRelativeMovement();
+	float rotSpeed = 35.0f;
+	m_camRot.y += 0.005f * rawMouseMovement.x * rotSpeed;
+	m_camRot.x += 0.005f * rawMouseMovement.y * rotSpeed;
+	if( m_camRot.x > 90.0f )
 	{
-		swapper = !swapper;
-		if( g_pingPongTimer < 0.0f )
-			g_pingPongTimer = 0.0f;
-		else
-			g_pingPongTimer = 7.0f;
+		m_camRot.x = 90.0f;
 	}
-	if( swapper )
-		g_pingPongTimer += deltaSeconds;
+	if( m_camRot.x < -90.0f )
+	{
+		m_camRot.x = -90.0f;
+	}
+
+	float speed = 10.0f;
+	m_camPos += m_curentCamera.GetForward() * input.z * deltaSeconds * speed;
+	m_camPos += m_curentCamera.GetUp() * input.y * deltaSeconds * speed;
+	m_camPos += m_curentCamera.GetRight() * input.x * deltaSeconds * speed;
+
+	float screenHeight = g_theDebugRenderSystem->GetScreenHeight() * .5f;
+	float screenWidth = g_theDebugRenderSystem->GetScreenWidth() * .5f;
+	Matrix44 camModle = m_curentCamera.GetModelMatrix();
+	camModle.InvertOrthonormal();
+	DebugRenderScreenBasis( 0.0f, Vec2( screenWidth - 4.5f, -screenHeight + 4.5f ), Vec3( camModle.GetK() ), Vec3( camModle.GetJ() ), Vec3( camModle.GetI() ), 4.0f );
+
+
+	Matrix44 mat = Matrix44::FromEuler( Vec3( 0.0f, g_theApp->GetGlobleTime() * 40.0f, 0.0f ), ROTATION_ORDER_ZXY );
+
+	if( m_actLights > 1 )
+	{
+		LightData light = g_theRenderer->GetLightAtSlot( 1 );
+		light.color.a =  1.0f;
+		g_theRenderer->EnableLight( 1, light );
+	}
 	else
-		g_pingPongTimer -= deltaSeconds;
-
-	g_charTimer += deltaSeconds;
-	g_printGlyphCount = (int) g_charTimer;
-	if( g_charTimer > 30.0f )
 	{
-		g_charTimer = 0.0f;
+		g_theRenderer->DisableLight( 1 );
+	}
+	if( m_actLights > 2 )
+	{
+		LightData light = g_theRenderer->GetLightAtSlot( 2 );
+		light.position = mat.TransformPosition3D( Vec3( 0.0f, 0.0f, -1.0f ) * 5.0f );
+		light.color.a =  1.0f;
+		g_theRenderer->EnableLight( 2, light );
+	}
+	else
+	{
+		g_theRenderer->DisableLight( 2 );
+	}
+	if( m_actLights > 3 )
+	{
+		LightData light = g_theRenderer->GetLightAtSlot( 3 );
+		light.position = mat.TransformPosition3D( Vec3( 1.0f, 0.0f, 0.0f ) * 5.0f );
+		light.color.a =  1.0f;
+		light.diffuse_attenuation = Vec3( 1.0f, 0.05f, 0.1f );
+		g_theRenderer->EnableLight( 3, light );
+	}
+	else
+	{
+		g_theRenderer->DisableLight( 3 );
+	}
+	if( m_actLights > 4 )
+	{
+		LightData light = g_theRenderer->GetLightAtSlot( 4 );
+		light.position = mat.TransformPosition3D( Vec3( -1.0f, 0.0f, 0.0f ) * 5.0f );
+		light.color.a =  1.0f;
+		//light.diffuse_attenuation = Vec3( .5f, 0.2f, 0.3f );
+		g_theRenderer->EnableLight( 4, light );
+	}
+	else
+	{
+		g_theRenderer->DisableLight( 4 );
 	}
 
+	for( unsigned int lightIdx = 0; lightIdx < 8; ++lightIdx )
+	{
+		LightData light = g_theRenderer->GetLightAtSlot( lightIdx );
+		if( g_theRenderer->GetLightAtSlot( lightIdx ).color.a > 0.0f )
+		{
+			DebugRenderPoint( 0.0f, DEBUG_RENDER_USE_DEPTH, light.position, light.color );
+		}
+		else
+		{
+			DebugRenderPoint( 0.0f, DEBUG_RENDER_USE_DEPTH, light.position, Rgba::RED );
+		}
+	}
+	matStruct my_struct;
+	my_struct.var = SinDegrees( (float) GetCurrentTimeSeconds() * 50.0f ) * .5f + .5f;
+	my_struct.padding = Vec3(0.0f, 0.0f, 0.0f); 
+	m_couchMat->SetUniforms( &my_struct, sizeof(my_struct) );
+
+
+
+	UpdateMaps();
 	UpdateCamera( deltaSeconds );
-
-}
-
-
-//--------------------------------------------------------------------------
-/**
-* GameRenderRenderDebug
-*/
-void Game::RenderDebug() const
-{
-	g_theRenderer->BindTextureView( 0, nullptr );
-	RenderDebugCosmetics();
-	RenderDebugPhysics();
-	g_theRenderer->EndCamera();
-	RenderDevConsole();
 }
 
 //--------------------------------------------------------------------------
 /**
-* RenderDebugCosmetics
+* GameRender
 */
-void Game::RenderDebugCosmetics() const
-{
-
-}
-
-//--------------------------------------------------------------------------
-/**
-* RenderDebugPhysics
-*/
-void Game::RenderDebugPhysics() const
+void Game::GameRender() const
 {
 	
-}
+	RenderMaps();
 
+	g_theDebugRenderSystem->RenderToCamera( g_theGame->GetCurrentCamera() );
+
+}
 
 //--------------------------------------------------------------------------
 /**
-* RenderDevConsole
+* RenderMaps
 */
-void Game::RenderDevConsole() const
+void Game::RenderMaps() const
 {
-	g_theConsole->Render( g_theRenderer, m_DevColsoleCamera, 10 );
+	for( int mapIdx = 0; mapIdx < (int) m_maps.size(); ++mapIdx )
+	{
+		m_maps[mapIdx]->Render();
+	}
 }
 
 //--------------------------------------------------------------------------
@@ -312,39 +473,35 @@ void Game::RenderDevConsole() const
 void Game::UpdateCamera( float deltaSeconds )
 {
 	UNUSED( deltaSeconds );
-	m_CurentCamera.SetModelMatrix( Matrix44::IDENTITY );
-//	m_CurentCamera.SetPerspectiveProjection( 60.f, WORLD_WIDTH / WORLD_HEIGHT );
-	m_CurentCamera.SetOrthographicProjection( Vec2(), Vec2(WORLD_WIDTH, WORLD_HEIGHT) );
-	m_CurentCamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
-	m_CurentCamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
-	g_theRenderer->BeginCamera( &m_CurentCamera );
+	m_curentCamera.SetModelMatrix( g_theGame->m_camPos, g_theGame->m_camRot );
+	m_curentCamera.SetPerspectiveProjection( 60.f, WORLD_WIDTH / WORLD_HEIGHT, 0.1f );
+	m_curentCamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
+	m_curentCamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
+	g_theRenderer->BeginCamera( &m_curentCamera );
 }
 
 
 //--------------------------------------------------------------------------
 /**
-* ResetGame
+* UpdateMaps
 */
-void Game::ResetGame()
+void Game::UpdateMaps()
 {
-	DeconstructGame();
-	ConstructGame();
+	for( int mapIdx = 0; mapIdx < (int) m_maps.size(); ++mapIdx )
+	{
+		m_maps[mapIdx]->Update();
+	}
 }
 
 //--------------------------------------------------------------------------
 /**
-* ConstructGame
+* Command_SetDirColor
 */
-void Game::ConstructGame()
+bool Game::Command_SetDirColor( EventArgs& args )
 {
-
-}
-
-//--------------------------------------------------------------------------
-/**
-* DeconstructGame
-*/
-void Game::DeconstructGame()
-{
-
+	Rgba color = args.GetValue("color", color );
+	LightData light = g_theRenderer->GetLightAtSlot( 0 );
+	light.color = color;
+	g_theRenderer->EnableLight( 0, light );
+	return true;
 }

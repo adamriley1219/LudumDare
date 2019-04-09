@@ -12,6 +12,9 @@ extern App* g_theApp;				// Created and owned by Main_Windows.cpp
 class InputSystem;
 extern InputSystem* g_theInputSystem;
 
+class PhysicsSystem;
+extern PhysicsSystem* g_thePhysicsSystem;
+
 class AudioSystem;
 extern AudioSystem* g_theAudioSystem;
 
@@ -24,14 +27,20 @@ extern Game* g_theGame;
 class WindowContext;
 extern WindowContext* g_theWindowContext;
 
-extern bool g_isInDebug;
-
 //--------------------------------------------------------------------------
 // Constant global variables.
 //--------------------------------------------------------------------------
-constexpr float WORLD_WIDTH = 200.f;
-constexpr float WORLD_HEIGHT = 100.f;
+constexpr float WORLD_WIDTH = 10.f;
+constexpr float WORLD_HEIGHT = 5.f;
 constexpr float WORLD_CENTER_X = WORLD_WIDTH / 2.f;
 constexpr float WORLD_CENTER_Y = WORLD_HEIGHT / 2.f;
 
 
+enum eGameStates
+{
+	GAMESTATE_INIT,
+	GAMESTATE_MAINMENU,
+	GAMESTATE_LOADING,
+	GAMESTATE_GAMEPLAY,
+	GAMESTATE_EDITOR
+};

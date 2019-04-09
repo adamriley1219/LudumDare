@@ -58,7 +58,7 @@ static bool AppWindowProc( void* windowHandle, uint32_t wmMessageCode, uintptr_t
 	{
 		unsigned char asKey = (unsigned char) wParam;
 		g_theApp->HandleKeyPressed(asKey);
-
+		
 		if( asKey == VK_ESCAPE )
 		{
 			if( !g_theConsole->HandleESCPress() )

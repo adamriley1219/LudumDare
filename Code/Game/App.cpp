@@ -8,6 +8,7 @@
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Physics/PhysicsSystem.hpp"
+#include "Engine/Renderer/Debug/DebugRenderSystem.hpp"
 #include "Game/GameCommon.hpp"
 
 //--------------------------------------------------------------------------
@@ -17,7 +18,6 @@ RenderContext* g_theRenderer = nullptr;		// Created and owned by the App
 InputSystem* g_theInputSystem = nullptr;
 AudioSystem* g_theAudioSystem = nullptr;
 App* g_theApp = nullptr;					// Created and owned by Main_Windows.cpp
-bool g_isInDebug = false;
 RNG* g_theRNG = nullptr;
 PhysicsSystem* g_thePhysicsSystem = nullptr;
 Game* g_theGame = nullptr;
@@ -34,6 +34,7 @@ void App::Startup()
 	g_theEventSystem = new EventSystem();
 	g_theConsole = new DevConsole( "SquirrelFixedFont" );
 	g_theRenderer = new RenderContext( g_theWindowContext );
+	g_theDebugRenderSystem = new DebugRenderSystem( g_theRenderer, 50.0f, 100.0f, "SquirrelFixedFont" );
 	g_theInputSystem = new InputSystem();
 	g_theAudioSystem = new AudioSystem();
 	g_thePhysicsSystem = new PhysicsSystem();
@@ -41,6 +42,7 @@ void App::Startup()
 
 	g_theEventSystem->Startup();
 	g_theRenderer->Startup();
+	g_theDebugRenderSystem->Startup();
 	g_theConsole->Startup();
 	g_thePhysicsSystem->Startup();
 	g_theGame->Startup();
@@ -57,6 +59,7 @@ void App::Shutdown()
 	g_theGame->Shutdown();
 	g_thePhysicsSystem->Shutdown();
 	g_theConsole->Shutdown();
+	g_theDebugRenderSystem->Startup();
 	g_theRenderer->Shutdown();
 	g_theEventSystem->Shutdown();
 
@@ -68,6 +71,8 @@ void App::Shutdown()
 	g_theInputSystem = nullptr;
 	delete g_theConsole;
 	g_theConsole = nullptr;
+	delete g_theDebugRenderSystem;
+	g_theDebugRenderSystem = nullptr;
 	delete g_theRenderer;
 	g_theRenderer = nullptr;
 	delete g_theRNG;
@@ -120,7 +125,7 @@ bool App::HandleKeyPressed( unsigned char keyCode )
 	switch( keyCode )
 	{
 	case 192: // '~' press
-
+		
 		break;
 	case 'P':
 		if(m_isPaused)
@@ -140,10 +145,6 @@ bool App::HandleKeyPressed( unsigned char keyCode )
 	case 'w': // F8 press
 		delete g_theGame;
 		g_theGame = new Game();
-		return true;
-		break;
-	case 'p': // F1 press
-		ToggleDebug();
 		return true;
 		break;
 	default:
@@ -230,12 +231,14 @@ void App::TogglePause()
 */
 void App::BeginFrame()
 {
-	g_theEventSystem->	BeginFrame();
-	g_theRenderer->		BeginFrame();
-	g_theConsole->		BeginFrame();
-	g_theInputSystem->	BeginFrame();
-	g_theAudioSystem->	BeginFrame();
-
+	g_theEventSystem->		BeginFrame();
+	g_theRenderer->			BeginFrame();
+	g_theConsole->			BeginFrame();
+	g_theInputSystem->		BeginFrame();
+	g_theAudioSystem->		BeginFrame();
+	g_thePhysicsSystem->	BeginFrame();
+	g_theDebugRenderSystem->BeginFrame();
+	++m_frame;
 }
 
 
@@ -245,64 +248,9 @@ void App::BeginFrame()
 */
 void App::Update( float deltaSeconds )
 {
-	g_theConsole->	Update( m_time );
-	g_theGame->		UpdateGame( deltaSeconds );
-}
-
-//--------------------------------------------------------------------------
-/**
-* RenderDebugRenderDebugLeftJoystick
-*/
-void App::RenderDebugLeftJoystick() const
-{
-	float inRangex = 2.0f;
-	float inRangey = 2.0f;
-	float outerRadius = 8.0f;
-	float posRadius = 0.5f;
-	const XboxController& curController = g_theInputSystem->GetControllerByID(0);
-	if( !curController.IsConnected() )
-		return;
-	const AnalogJoystick& curLJoystick = curController.GetLeftJoystick();
-	const Vec2& upRightRef = g_theGame->m_DevColsoleCamera.GetOrthoTopRight();
-
-	Vec3 center
-	(	
-		upRightRef.x - inRangex - outerRadius
-		,	upRightRef.y - inRangey - outerRadius
-		,	0.0f
-	);
-
-	Vertex_PCU centerVert( center, Rgba( 0.4f, 0.4f, 0.4f, 0.5f ), Vec2( 0.0f, 0.0f ) );
-	DrawDisc( centerVert , outerRadius );
-
-
-
-	centerVert.m_color.r = 0.1f;
-	centerVert.m_color.g = 0.1f;
-	centerVert.m_color.b = 0.1f;
-	DrawDisc( centerVert , outerRadius * curLJoystick.GetOuterDeadZoneFraction() );
-	centerVert.m_color.r = 0.3f;
-	centerVert.m_color.g = 0.3f;
-	centerVert.m_color.b = 0.3f;
-	DrawDisc( centerVert , outerRadius * curLJoystick.GetInnerDeadZoneFraction() );
-
-	Vec3 rawCenter
-	(
-		center.x + curLJoystick.GetRawPosition().x * outerRadius
-		,	center.y + curLJoystick.GetRawPosition().y * outerRadius
-		,	0.0f	
-	);
-	Vertex_PCU rawInput( rawCenter, Rgba( 1.0f, 0.0f, 0.0f, 1.0f ), Vec2( 0.0f, 0.0f ) );
-	DrawDisc( rawInput , posRadius );
-
-	Vec3 fixedCenter
-	(
-		center.x + curLJoystick.GetPosition().x * outerRadius
-		,	center.y + curLJoystick.GetPosition().y * outerRadius
-		,	0.0f	
-	);
-	Vertex_PCU fixedInput( fixedCenter, Rgba( 0.0f, 0.7f, 0.7f, 1.0f ), Vec2( 0.0f, 0.0f ) );
-	DrawDisc( fixedInput , posRadius );
+	g_theConsole->			Update( m_time );
+	g_theGame->				UpdateGame( deltaSeconds );
+	g_theDebugRenderSystem->Update( deltaSeconds );
 }
 
 //--------------------------------------------------------------------------
@@ -311,13 +259,17 @@ void App::RenderDebugLeftJoystick() const
 */
 void App::Render() const
 {
-	g_theRenderer->ClearScreen( Rgba::BLACK );
-	if( g_isInDebug )
+	g_theRenderer->ClearScreen( Rgba::DARK_GRAY );
+	g_theGame->GameRender();
+
+	if( g_theConsole->IsOpen() )
 	{
-		RenderDebugLeftJoystick();
+		g_theConsole->Render( g_theRenderer, g_theGame->m_DevColsoleCamera, m_consoleTextHeight );
 	}
-	g_theGame->		GameRender();
-	g_theConsole->	Render( g_theRenderer, g_theGame->m_DevColsoleCamera, m_consoleTextHeight );
+	else
+	{
+		g_theDebugRenderSystem->RenderToScreen();
+	}
 }
 
 //--------------------------------------------------------------------------
@@ -326,27 +278,13 @@ void App::Render() const
 */
 void App::EndFrame()
 {
-	g_theConsole->		EndFrame();
-	g_theAudioSystem->	EndFrame();
-	g_theInputSystem->	EndFrame();
-	g_theRenderer->		EndFrame();
-	g_theEventSystem->	EndFrame();
-}
-
-//--------------------------------------------------------------------------
-/**
-* ToggleDebug
-*/
-void App::ToggleDebug()
-{
-	if ( g_isInDebug )
-	{	
-		g_isInDebug = false;
-	}
-	else
-	{
-		g_isInDebug = true;
-	}
+	g_theDebugRenderSystem->EndFrame();
+	g_thePhysicsSystem->	EndFrame();
+	g_theConsole->			EndFrame();
+	g_theAudioSystem->		EndFrame();
+	g_theInputSystem->		EndFrame();
+	g_theRenderer->			EndFrame();
+	g_theEventSystem->		EndFrame();
 }
 
 //--------------------------------------------------------------------------

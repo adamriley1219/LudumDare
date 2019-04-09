@@ -11,7 +11,10 @@
       <UniqueIdentifier>{b23cac94-af11-45bd-9bfb-5e7f60128ed8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Data\Shaders">
-      <UniqueIdentifier>{d6d95299-1258-4a86-968f-96c7d23d618d}</UniqueIdentifier>
+      <UniqueIdentifier>{547b9bda-62d0-4236-b41c-03eb8c8ae9a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Data\Materials">
+      <UniqueIdentifier>{597ba9f8-aea7-49f9-88eb-34bf0167fc17}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -29,6 +32,9 @@
     </ClCompile>
     <ClCompile Include="GameUtils.cpp">
       <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Map.cpp">
+      <Filter>Gameplay</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -50,24 +56,74 @@
     <ClInclude Include="EngineBuildPreferences.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
+    <ClInclude Include="Map.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Run\Data\GameConfig.xml">
       <Filter>Data</Filter>
     </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\devShader.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\shader.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\greaterDrawShader.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\alwaysDrawShader.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\lessOrEqualDrawShader.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\lequalWireframeShader.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\normal.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\default_lit.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\bitangent.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\tangent.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\dissolve.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="..\..\Run\Data\Shaders\nop_color.hlsl">
-      <Filter>Data\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\..\Run\Data\Shaders\ubo.hlsl">
-      <Filter>Data\Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\..\Run\Data\Shaders\vbo.hlsl">
-      <Filter>Data\Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="..\..\Run\Data\Shaders\default_unlit.hlsl">
       <Filter>Data\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\default_unlit.01.hlsl">
+      <Filter>Data\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\dot3_lighting.hlsl">
+      <Filter>Data\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\normal.hlsl">
+      <Filter>Data\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\bitangent.hlsl">
+      <Filter>Data\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\tangent.hlsl">
+      <Filter>Data\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\dissolve.hlsl">
+      <Filter>Data\Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Run\Data\Materials\couch.mat">
+      <Filter>Data\Materials</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -9,36 +9,6 @@
 
 //--------------------------------------------------------------------------
 /**
-* DrawDisc
-*/
-void DrawDisc( const Vertex_PCU translation, float radius )
-{
-	constexpr int NUM_DISC_SIDES = 64;
-	constexpr int NUM_DISC_VERTS = 64 * 3;
-
-	float toAddDegrees = 360.0f / NUM_DISC_SIDES;
-	float theta = 0.0f;
-	Vertex_PCU VertsToDraw[ NUM_DISC_VERTS ] = {};
-
-	for( int i = 0; i < NUM_DISC_VERTS; i += 3 )
-	{
-		VertsToDraw[i] = translation;
-
-		Vec2 point2d = Vec2::MakeFromPolarDegrees(theta, radius);
-		Vec3 point3d = Vec3( point2d.x, point2d.y, 0.0f );
-		VertsToDraw[i + 1] = Vertex_PCU( translation.m_position + point3d , translation.m_color, translation.m_uvTexCoords );
-
-		theta += toAddDegrees;
-		point2d = Vec2::MakeFromPolarDegrees(theta, radius);
-		point3d = Vec3( point2d.x, point2d.y, 0.0f );
-		VertsToDraw[i + 2] = Vertex_PCU( translation.m_position + point3d , translation.m_color, translation.m_uvTexCoords );
-	}
-
-	g_theRenderer->DrawVertexArray( NUM_DISC_VERTS, VertsToDraw );
-}
-
-//--------------------------------------------------------------------------
-/**
 * ResolveBulletVxAsteroidGetDistance
 */
 float GetDistanceBetween( const Entity* entityA, const Entity* entiryB )
@@ -55,4 +25,3 @@ float GetRandomlyChosenFloat( float a, float b )
 	}
 	return b;
 }
-

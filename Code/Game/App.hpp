@@ -26,21 +26,22 @@ public:
 
 	void TogglePause();
 	float GetGlobleTime() const { return m_time; }
+	int GetFrameCount() const { return m_frame; }
+	float GetConsoleTextHeight() const { return m_consoleTextHeight; }
 private:
 	void BeginFrame();
 	void Update( float deltaSeconds );
 	void Render() const;
-	void RenderDebugLeftJoystick() const;
 	void EndFrame();
-	void ToggleDebug();
 	void RegisterEvents();
 
 private:
-	bool m_isQuitting = false;
-	bool m_isPaused = false;
-	bool m_isSlowMo = false;
-	bool m_isFastMo = false;
-	float m_time = 0;
-	float m_consoleTextHeight = 2.0f;
+	bool m_isQuitting			= false;
+	bool m_isPaused				= false;
+	bool m_isSlowMo				= false;
+	bool m_isFastMo				= false;
+	float m_time				= 0.0f;
+	int m_frame					= 0;
+	float m_consoleTextHeight	= 2.0f;
 
 };
