@@ -14,7 +14,7 @@
 Map::Map( RenderContext* context )
 {
 	m_renderContext = context;
-	m_terrainMaterial = context->CreateOrGetMaterialFromXML( "Data/Materials/couch.mat" );
+	m_terrainMaterial = context->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" );
 }
 
 //--------------------------------------------------------------------------
@@ -43,6 +43,7 @@ bool Map::Load( char const *filename )
 bool Map::Create( int tileWidth, int tileHeight )
 {
 	m_tileDimensions = IntVec2( tileWidth, tileHeight );
+	m_vertDimensions = IntVec2( 2 * tileWidth + 1, 2 * tileHeight + 1 );
 	GenerateTerrainMesh();
 	return true;
 }
@@ -98,7 +99,46 @@ void Map::RenderTerrain( Material* matOverride /*= nullptr */ ) const
 void Map::GenerateTerrainMesh()
 {
 	MeshCPU plane;
-	CPUMeshAddPlain( &plane, GetXYBounds() );
+	AABB2 bounds = GetXYBounds();
+
+	// Push all verts into plane.
+	float v = (float) m_vertDimensions.y;
+	for( unsigned int hIdx = 0; hIdx < (unsigned int) m_vertDimensions.y; ++hIdx )
+	{
+		float u = 0.0f;
+		for( unsigned int wInt = 0; wInt < (unsigned int) m_vertDimensions.x; ++wInt )
+		{
+			VertexMaster vertToAdd;
+			
+			vertToAdd.position	= Vec3( -.5f + (float) wInt * .5f, -.5f + (float) hIdx * .5f, 0.0f );
+			vertToAdd.normal	= Vec3( 0.0f, 0.0f, -1.0f );
+			vertToAdd.tangent	= Vec4( 1.0f, 0.0f, 0.0f, 1.0f );			
+			vertToAdd.uv		= Vec2( u, v );
+
+			plane.AddVertex( vertToAdd );
+			u += .5f;
+		}
+		v -= .5f;
+	}
+
+	for( unsigned int hIdx = 0; hIdx < (unsigned int) m_tileDimensions.y * 2; ++hIdx )
+	{
+		for( unsigned int wInt = 0; wInt < (unsigned int) m_tileDimensions.x * 2; ++wInt )
+		{
+			plane.AddIndexedTriangle( GetVertIndex( wInt, hIdx ), GetVertIndex( wInt + 1, hIdx ), GetVertIndex( wInt + 1, hIdx + 1 ) );
+			plane.AddIndexedTriangle( GetVertIndex( wInt, hIdx ), GetVertIndex( wInt + 1, hIdx + 1 ), GetVertIndex( wInt, hIdx + 1 ) );
+		}
+	}
+
 	m_terrainMesh = new MeshGPU( g_theRenderer );
 	m_terrainMesh->CreateFromCPUMesh<Vertex_LIT>( &plane );
+}
+
+//--------------------------------------------------------------------------
+/**
+* GetVertIndex
+*/
+int Map::GetVertIndex( int x, int y )
+{
+	return x + y * m_vertDimensions.x;
 }

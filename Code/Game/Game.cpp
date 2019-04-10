@@ -128,6 +128,13 @@ void Game::Startup()
 	Map* editMap =  new Map( g_theRenderer );
 	editMap->Load( "UNUNSED RIGHT NOW" );
 	m_maps.push_back( editMap );
+	editMap =  new Map( g_theRenderer );
+	editMap->Load( "UNUNSED RIGHT NOW" );
+	m_maps.push_back( editMap );
+
+	// Setup UI Camera
+	m_UICamera.SetOrthographicProjection( Vec2( -50.0f, -100.0f ), Vec2( 50.0f,  100.0f ) );
+	m_UICamera.SetModelMatrix( Matrix44::IDENTITY );
 }
 
 //--------------------------------------------------------------------------
@@ -156,55 +163,30 @@ void Game::Shutdown()
 */
 bool Game::HandleKeyPressed( unsigned char keyCode )
 {
-	if( keyCode == 'N' )
+	if( keyCode == 'M' )
 	{
-		++shaderType;
-		switch( shaderType )
+		switch( m_state )
 		{
-		case 0:
-			m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/default_lit.xml" );
+		case GAMESTATE_INIT:
+			m_state = GAMESTATE_MAINMENU;
 			break;
-		case 1:
-			m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/normal.xml" );
+		case GAMESTATE_MAINMENU:
+			m_state = GAMESTATE_LOADING;
 			break;
-		case 2:
-			m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/tangent.xml" );
+		case GAMESTATE_LOADING:
+			m_state = GAMESTATE_GAMEPLAY;
 			break;
-		case 3:
-			m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/bitangent.xml" );
+		case GAMESTATE_GAMEPLAY:
+			m_state = GAMESTATE_EDITOR;
+			break;
+		case GAMESTATE_EDITOR:
+			m_state = GAMESTATE_INIT;
 			break;
 		default:
-			shaderType = 0;
-			m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/default_lit.xml" );
 			break;
 		}
 	}
-	//--------------------------------------------------------------------------
-	if( keyCode == 'J' )
-	{
-		m_specPow += 0.05f;
-		m_specPow = Clamp( m_specPow, 0.0f, 99.0f );
-		g_theRenderer->SetSpecPower( m_specPow );
-	}
-	if( keyCode == 'H' )
-	{
-		m_specPow -= 0.05f;
-		m_specPow = Clamp( m_specPow, 0.0f, 99.0f );
-		g_theRenderer->SetSpecPower( m_specPow );
-	}	
-	//--------------------------------------------------------------------------
-	if( keyCode == 190 ) // '.'
-	{
-		m_specFact += 0.01f;
-		m_specFact = Clamp( m_specFact, 0.0f, 1.0f );
-		g_theRenderer->SetSpecFactor( m_specFact );
-	}
-	if( keyCode == 188 ) // ','
-	{
-		m_specFact -= 0.01f;
-		m_specFact = Clamp( m_specFact, 0.0f, 1.0f );
-		g_theRenderer->SetSpecFactor( m_specFact );
-	}	
+
 	//--------------------------------------------------------------------------
 	if( keyCode == 'L' )
 	{
@@ -232,25 +214,13 @@ bool Game::HandleKeyPressed( unsigned char keyCode )
 		g_theRenderer->SetEmissiveFactor( m_emissiveFac );
 	}
 
-	//--------------------------------------------------------------------------
-	if( keyCode == 'B' )
-	{
-		LightData light = g_theRenderer->GetLightAtSlot( 1 );
-		light.position = m_camPos;
-		g_theRenderer->EnableLight( 1, light );
-	}
 	if( keyCode == 'V' )
 	{
 		LightData light = g_theRenderer->GetLightAtSlot( 0 );
 		light.direction = m_curentCamera.GetForward();
 		g_theRenderer->EnableLight( 0, light );
 	}
-	if( keyCode == 'X' )
-	{
-		LightData light = g_theRenderer->GetLightAtSlot( 0 );
-		light.color.a = 0.0f;
-		g_theRenderer->EnableLight( 0, light );
-	}
+
 	//--------------------------------------------------------------------------
 	if( keyCode == 222 ) // '''
 	{
@@ -344,6 +314,28 @@ bool Game::HandleKeyReleased( unsigned char keyCode )
 */
 void Game::UpdateGame( float deltaSeconds )
 {
+	switch( m_state )
+	{
+	case GAMESTATE_INIT:
+		m_UICamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
+		m_UICamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
+		g_theRenderer->BeginCamera( &m_UICamera );
+		break;
+	case GAMESTATE_MAINMENU:
+		break;
+	case GAMESTATE_LOADING:
+		break;
+	case GAMESTATE_GAMEPLAY:
+		UpdateMap( m_curMapIdx );
+		break;
+	case GAMESTATE_EDITOR:
+		UpdateMap( 0 ); 
+		break;
+	default:
+		ERROR_AND_DIE("UNKNOWN STATE IN Game::UpdateGame");
+		break;
+	}
+
 	m_gameTime += deltaSeconds;
 	IntVec2 rawMouseMovement = g_theWindowContext->GetClientMouseRelativeMovement();
 	float rotSpeed = 35.0f;
@@ -435,9 +427,6 @@ void Game::UpdateGame( float deltaSeconds )
 	my_struct.padding = Vec3(0.0f, 0.0f, 0.0f); 
 	m_couchMat->SetUniforms( &my_struct, sizeof(my_struct) );
 
-
-
-	UpdateMaps();
 	UpdateCamera( deltaSeconds );
 }
 
@@ -447,23 +436,62 @@ void Game::UpdateGame( float deltaSeconds )
 */
 void Game::GameRender() const
 {
-	
-	RenderMaps();
+	g_theRenderer->BeginCamera( &(g_theGame->m_curentCamera) );
 
+	switch( m_state )
+	{
+	case GAMESTATE_INIT:
+		g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
+		DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "INIT" );
+		RenderLoadingScreen();
+		break;
+	case GAMESTATE_MAINMENU:
+		g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
+		g_theRenderer->ClearScreen( Rgba::BLUE );
+		DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_CENTERED, 10.0f, Rgba::WHITE, Rgba::WHITE, "MainMenu" );
+		break;
+	case GAMESTATE_LOADING:
+		g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
+		DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "GameLoding" );
+		RenderLoadingScreen();
+		break;
+	case GAMESTATE_GAMEPLAY:
+		g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" ) );
+		DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "Gameplay" );
+		RenderMap( m_curMapIdx );
+		break;
+	case GAMESTATE_EDITOR:
+		g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" ) );
+		DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "Editor" );
+		RenderMap( 0 );
+		break;
+	default:
+		ERROR_AND_DIE("UNKNOWN STATE IN Game::GameRender");
+		break;
+	}
+
+	g_theRenderer->EndCamera();
 	g_theDebugRenderSystem->RenderToCamera( g_theGame->GetCurrentCamera() );
-
 }
 
 //--------------------------------------------------------------------------
 /**
-* RenderMaps
+* RenderMap
 */
-void Game::RenderMaps() const
+void Game::RenderMap( unsigned int index ) const
 {
-	for( int mapIdx = 0; mapIdx < (int) m_maps.size(); ++mapIdx )
-	{
-		m_maps[mapIdx]->Render();
-	}
+	ASSERT_OR_DIE( index < m_maps.size(), Stringf( "Invalid index of: %u into the maps.", index ) );
+	m_maps[index]->Render();
+}
+
+//--------------------------------------------------------------------------
+/**
+* RenderLoadingScreen
+*/
+void Game::RenderLoadingScreen() const
+{
+	g_theRenderer->ClearScreen( Rgba::LIGHT_BLUE );
+	DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_CENTERED, 10.0f, Rgba::WHITE, Rgba::WHITE, "Loading..." );
 }
 
 //--------------------------------------------------------------------------
@@ -474,23 +502,20 @@ void Game::UpdateCamera( float deltaSeconds )
 {
 	UNUSED( deltaSeconds );
 	m_curentCamera.SetModelMatrix( g_theGame->m_camPos, g_theGame->m_camRot );
-	m_curentCamera.SetPerspectiveProjection( 60.f, WORLD_WIDTH / WORLD_HEIGHT, 0.1f );
+	m_curentCamera.SetPerspectiveProjection( 90.f, WORLD_WIDTH / WORLD_HEIGHT, 0.000000001f );
 	m_curentCamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
 	m_curentCamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
 	g_theRenderer->BeginCamera( &m_curentCamera );
 }
 
-
 //--------------------------------------------------------------------------
 /**
-* UpdateMaps
+* UpdateMap
 */
-void Game::UpdateMaps()
+void Game::UpdateMap( unsigned int index )
 {
-	for( int mapIdx = 0; mapIdx < (int) m_maps.size(); ++mapIdx )
-	{
-		m_maps[mapIdx]->Update();
-	}
+	ASSERT_OR_DIE( index < m_maps.size(), Stringf( "Invalid index of: %u into the maps.", index ) );
+	m_maps[index]->Update();
 }
 
 //--------------------------------------------------------------------------

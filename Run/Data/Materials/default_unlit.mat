@@ -1,0 +1,14 @@
+
+
+
+
+<material id="defaultUnlit"
+  shader="Data/Shaders/devShader.xml">
+
+  <diffuse src="Data/Images/Couch/example_colour.png" samplerType="point" />
+  <normal  src="Data/Images/Couch/example_normal.png" samplerType="linear" />
+  <specular src="Data/Images/Couch/example_spec.png" samplerType="linear" />
+  <emissive src="Data/Images/CAT.png" samplerType="linear" />
+  <noise src="Data/Images/NoiseBumpMap.jpg" samplerType="linear" />
+  
+</material>

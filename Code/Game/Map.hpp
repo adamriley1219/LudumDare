@@ -39,6 +39,8 @@ private:
 	void RenderTerrain( Material* matOverride = nullptr ) const; 															
 	void GenerateTerrainMesh(); 
 
+	int GetVertIndex( int x, int y );
+
 private: 
 	IntVec2 m_tileDimensions; 
 	IntVec2 m_vertDimensions; 

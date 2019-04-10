@@ -10,8 +10,8 @@
     <vert entry="VertexFunction" />
     <frag entry="FragmentFunction" />
     <depth
-         write="true"
-         test="lequal" />
+         write="false"
+         test="always" />
     <blend
          mode="alpha" />
     <raster

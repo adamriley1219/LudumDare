@@ -1,0 +1,14 @@
+
+
+
+
+<material id="defaultUnlit"
+  shader="Data/Shaders/default_lit.xml">
+
+  <diffuse src="Data/Images/Stone/stone_diffuse.png" samplerType="point" />
+  <normal  src="Data/Images/Stone/stone_normal.png" samplerType="linear" />
+  <specular src="Data/Images/Stone/stone_spec.png" samplerType="linear" />
+  <emissive src="Data/Images/CAT.png" samplerType="linear" />
+  <noise src="Data/Images/NoiseBumpMap.jpg" samplerType="linear" />
+  
+</material>

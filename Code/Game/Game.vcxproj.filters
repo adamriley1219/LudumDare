@@ -16,11 +16,17 @@
     <Filter Include="Data\Materials">
       <UniqueIdentifier>{597ba9f8-aea7-49f9-88eb-34bf0167fc17}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Gameplay\Maps">
+      <UniqueIdentifier>{6ae7cc45-0934-473e-9ed9-4565de0a4002}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gameplay\User">
+      <UniqueIdentifier>{8c24909e-0314-4b12-aea3-d9ab0048994d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gameplay\Units">
+      <UniqueIdentifier>{5e078faf-20b4-4f3e-bd73-1a6fd637ed1d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Entity.cpp">
-      <Filter>Gameplay</Filter>
-    </ClCompile>
     <ClCompile Include="Game.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
@@ -34,13 +40,16 @@
       <Filter>Framework</Filter>
     </ClCompile>
     <ClCompile Include="Map.cpp">
+      <Filter>Gameplay\Maps</Filter>
+    </ClCompile>
+    <ClCompile Include="RTSCamera.cpp">
+      <Filter>Gameplay\User</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Entity.hpp">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
     <ClInclude Include="Game.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
@@ -57,6 +66,12 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Map.hpp">
+      <Filter>Gameplay\Maps</Filter>
+    </ClInclude>
+    <ClInclude Include="RTSCamera.hpp">
+      <Filter>Gameplay\User</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
   </ItemGroup>
@@ -123,6 +138,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Run\Data\Materials\couch.mat">
+      <Filter>Data\Materials</Filter>
+    </None>
+    <None Include="..\..\Run\Data\Materials\default_lit.mat">
+      <Filter>Data\Materials</Filter>
+    </None>
+    <None Include="..\..\Run\Data\Materials\default_unlit.mat">
       <Filter>Data\Materials</Filter>
     </None>
   </ItemGroup>
