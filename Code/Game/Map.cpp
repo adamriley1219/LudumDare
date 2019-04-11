@@ -4,8 +4,10 @@
 #include "Engine/Renderer/MeshGPU.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
-#include "Game/GameCommon.hpp"
 #include "Engine/Core/Vertex/Vertex_LIT.hpp"
+#include "Engine/Renderer/Debug/DebugRenderSystem.hpp"
+#include "Game/GameCommon.hpp"
+#include "Game/RTSCamera.hpp"
 
 //--------------------------------------------------------------------------
 /**
@@ -15,6 +17,7 @@ Map::Map( RenderContext* context )
 {
 	m_renderContext = context;
 	m_terrainMaterial = context->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" );
+	m_camera = new RTSCamera();
 }
 
 //--------------------------------------------------------------------------
@@ -24,6 +27,7 @@ Map::Map( RenderContext* context )
 Map::~Map()
 {
 	SAFE_DELETE( m_terrainMesh );
+	SAFE_DELETE( m_camera );
 }
 
 //--------------------------------------------------------------------------
@@ -33,6 +37,7 @@ Map::~Map()
 bool Map::Load( char const *filename )
 {
 	UNUSED(filename);
+	m_camera->SetFocalPoint( Vec3( 32.0f, 32.0f, 0.0f ) );
 	return Create( 64, 64 );
 }
 
@@ -52,8 +57,12 @@ bool Map::Create( int tileWidth, int tileHeight )
 /**
 * Update
 */
-void Map::Update()
+void Map::Update( float deltaSec )
 {
+	m_camera->Update( deltaSec );
+	m_camera->BindCamera( m_renderContext );
+	DebugRenderPoint( 0.0f, DEBUG_RENDER_ALWAYS, m_camera->m_focalPoint, Rgba::RED, Rgba::RED, 0.1f );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, "LookAt: %.02f,%.02f,%.02f", m_camera->m_focalPoint.x,  m_camera->m_focalPoint.y,  m_camera->m_focalPoint.z );
 
 }
 

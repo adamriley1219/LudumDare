@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Math/IntVec2.hpp"
+#include "Game/RTSCamera.hpp"
 
 //--------------------------------------------------------------------------
 
@@ -9,6 +10,7 @@ struct IntVec2;
 struct Vertex_LIT;
 class Material;
 class MeshGPU;
+class RTSCamera;
 
 //--------------------------------------------------------------------------
 
@@ -29,11 +31,12 @@ public:
 	bool Load( char const *filename );            
 	bool Create( int tileWidth, int tileHeight ); 
 
-	void Update(); 
+	void Update( float deltaSec ); 
 	void Render() const; 
 
 public:
 	AABB2 GetXYBounds() const; 
+	RTSCamera* GetCamera() { return m_camera; }
 
 private:
 	void RenderTerrain( Material* matOverride = nullptr ) const; 															
@@ -48,8 +51,10 @@ private:
 	MapTile* m_tiles        = nullptr;  
 	Vertex_LIT* m_vertices   = nullptr;  
 
-	MeshGPU* m_terrainMesh; 
-	Material* m_terrainMaterial; 
+	MeshGPU* m_terrainMesh = nullptr; 
+	Material* m_terrainMaterial = nullptr;  
+
+	RTSCamera* m_camera = nullptr;
 
 	RenderContext* m_renderContext = nullptr;
 }; 

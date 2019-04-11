@@ -51,9 +51,6 @@ void Game::Startup()
 	m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/default_lit.xml" );
 	g_theRenderer->BindShader( m_shader );
 	
-	g_theWindowContext->LockMouse();
-	g_theWindowContext->HideMouse();
-	g_theWindowContext->SetMouseMode( MOUSE_MODE_RELATIVE );
 
 	MeshCPU meshCPU;
 	CPUMeshAddCube( &meshCPU, AABB3( 2.0f, 2.0f, 2.0f ) );
@@ -135,6 +132,8 @@ void Game::Startup()
 	// Setup UI Camera
 	m_UICamera.SetOrthographicProjection( Vec2( -50.0f, -100.0f ), Vec2( 50.0f,  100.0f ) );
 	m_UICamera.SetModelMatrix( Matrix44::IDENTITY );
+
+	m_curCamera = &m_UICamera;
 }
 
 //--------------------------------------------------------------------------
@@ -217,7 +216,7 @@ bool Game::HandleKeyPressed( unsigned char keyCode )
 	if( keyCode == 'V' )
 	{
 		LightData light = g_theRenderer->GetLightAtSlot( 0 );
-		light.direction = m_curentCamera.GetForward();
+		light.direction = m_curCamera->GetForward();
 		g_theRenderer->EnableLight( 0, light );
 	}
 
@@ -277,7 +276,7 @@ bool Game::HandleKeyReleased( unsigned char keyCode )
 	if( keyCode == 'W' )
 	{
 		input.z = 0;
-		m_camPos += m_curentCamera.GetForward() * 0.1f;
+		m_camPos += m_curCamera->GetForward() * 0.1f;
 		return true;
 	}
 	if( keyCode == 'S' )
@@ -326,10 +325,10 @@ void Game::UpdateGame( float deltaSeconds )
 	case GAMESTATE_LOADING:
 		break;
 	case GAMESTATE_GAMEPLAY:
-		UpdateMap( m_curMapIdx );
+		UpdateMap( deltaSeconds, m_curMapIdx );
 		break;
 	case GAMESTATE_EDITOR:
-		UpdateMap( 0 ); 
+		UpdateMap( deltaSeconds, 0 ); 
 		break;
 	default:
 		ERROR_AND_DIE("UNKNOWN STATE IN Game::UpdateGame");
@@ -351,81 +350,16 @@ void Game::UpdateGame( float deltaSeconds )
 	}
 
 	float speed = 10.0f;
-	m_camPos += m_curentCamera.GetForward() * input.z * deltaSeconds * speed;
-	m_camPos += m_curentCamera.GetUp() * input.y * deltaSeconds * speed;
-	m_camPos += m_curentCamera.GetRight() * input.x * deltaSeconds * speed;
+	m_camPos += m_curCamera->GetForward() * input.z * deltaSeconds * speed;
+	m_camPos += m_curCamera->GetUp() * input.y * deltaSeconds * speed;
+	m_camPos += m_curCamera->GetRight() * input.x * deltaSeconds * speed;
 
 	float screenHeight = g_theDebugRenderSystem->GetScreenHeight() * .5f;
 	float screenWidth = g_theDebugRenderSystem->GetScreenWidth() * .5f;
-	Matrix44 camModle = m_curentCamera.GetModelMatrix();
+	Matrix44 camModle = m_curCamera->GetModelMatrix();
 	camModle.InvertOrthonormal();
 	DebugRenderScreenBasis( 0.0f, Vec2( screenWidth - 4.5f, -screenHeight + 4.5f ), Vec3( camModle.GetK() ), Vec3( camModle.GetJ() ), Vec3( camModle.GetI() ), 4.0f );
-
-
-	Matrix44 mat = Matrix44::FromEuler( Vec3( 0.0f, g_theApp->GetGlobleTime() * 40.0f, 0.0f ), ROTATION_ORDER_ZXY );
-
-	if( m_actLights > 1 )
-	{
-		LightData light = g_theRenderer->GetLightAtSlot( 1 );
-		light.color.a =  1.0f;
-		g_theRenderer->EnableLight( 1, light );
-	}
-	else
-	{
-		g_theRenderer->DisableLight( 1 );
-	}
-	if( m_actLights > 2 )
-	{
-		LightData light = g_theRenderer->GetLightAtSlot( 2 );
-		light.position = mat.TransformPosition3D( Vec3( 0.0f, 0.0f, -1.0f ) * 5.0f );
-		light.color.a =  1.0f;
-		g_theRenderer->EnableLight( 2, light );
-	}
-	else
-	{
-		g_theRenderer->DisableLight( 2 );
-	}
-	if( m_actLights > 3 )
-	{
-		LightData light = g_theRenderer->GetLightAtSlot( 3 );
-		light.position = mat.TransformPosition3D( Vec3( 1.0f, 0.0f, 0.0f ) * 5.0f );
-		light.color.a =  1.0f;
-		light.diffuse_attenuation = Vec3( 1.0f, 0.05f, 0.1f );
-		g_theRenderer->EnableLight( 3, light );
-	}
-	else
-	{
-		g_theRenderer->DisableLight( 3 );
-	}
-	if( m_actLights > 4 )
-	{
-		LightData light = g_theRenderer->GetLightAtSlot( 4 );
-		light.position = mat.TransformPosition3D( Vec3( -1.0f, 0.0f, 0.0f ) * 5.0f );
-		light.color.a =  1.0f;
-		//light.diffuse_attenuation = Vec3( .5f, 0.2f, 0.3f );
-		g_theRenderer->EnableLight( 4, light );
-	}
-	else
-	{
-		g_theRenderer->DisableLight( 4 );
-	}
-
-	for( unsigned int lightIdx = 0; lightIdx < 8; ++lightIdx )
-	{
-		LightData light = g_theRenderer->GetLightAtSlot( lightIdx );
-		if( g_theRenderer->GetLightAtSlot( lightIdx ).color.a > 0.0f )
-		{
-			DebugRenderPoint( 0.0f, DEBUG_RENDER_USE_DEPTH, light.position, light.color );
-		}
-		else
-		{
-			DebugRenderPoint( 0.0f, DEBUG_RENDER_USE_DEPTH, light.position, Rgba::RED );
-		}
-	}
-	matStruct my_struct;
-	my_struct.var = SinDegrees( (float) GetCurrentTimeSeconds() * 50.0f ) * .5f + .5f;
-	my_struct.padding = Vec3(0.0f, 0.0f, 0.0f); 
-	m_couchMat->SetUniforms( &my_struct, sizeof(my_struct) );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, "Camera: %.02f,%.02f,%.02f", m_curCamera->GetModelMatrix().m_values[Matrix44::Tx],  m_curCamera->GetModelMatrix().m_values[Matrix44::Ty],  m_curCamera->GetModelMatrix().m_values[Matrix44::Tz] );
 
 	UpdateCamera( deltaSeconds );
 }
@@ -436,8 +370,6 @@ void Game::UpdateGame( float deltaSeconds )
 */
 void Game::GameRender() const
 {
-	g_theRenderer->BeginCamera( &(g_theGame->m_curentCamera) );
-
 	switch( m_state )
 	{
 	case GAMESTATE_INIT:
@@ -501,21 +433,44 @@ void Game::RenderLoadingScreen() const
 void Game::UpdateCamera( float deltaSeconds )
 {
 	UNUSED( deltaSeconds );
-	m_curentCamera.SetModelMatrix( g_theGame->m_camPos, g_theGame->m_camRot );
-	m_curentCamera.SetPerspectiveProjection( 90.f, WORLD_WIDTH / WORLD_HEIGHT, 0.000000001f );
-	m_curentCamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
-	m_curentCamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
-	g_theRenderer->BeginCamera( &m_curentCamera );
+
+	switch( m_state )
+	{
+	case GAMESTATE_INIT:
+	case GAMESTATE_MAINMENU:
+	case GAMESTATE_LOADING:
+		m_UICamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
+		m_UICamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
+		g_theRenderer->BeginCamera( &m_UICamera );
+		m_curCamera = &m_UICamera;
+		break;
+	case GAMESTATE_GAMEPLAY:
+		m_curCamera = &(m_maps[m_curMapIdx]->GetCamera()->m_camera);
+		g_theRenderer->BeginCamera( m_curCamera );
+		break;
+	case GAMESTATE_EDITOR:
+		m_curCamera = &(m_maps[0]->GetCamera()->m_camera);
+		g_theRenderer->BeginCamera( m_curCamera );		
+		break;
+	default:
+		ERROR_AND_DIE("UNKNOWN STATE IN Game::UpdateGame");
+		break;
+	}
+// 	m_curentCamera.SetModelMatrix( g_theGame->m_camPos, g_theGame->m_camRot );
+// 	m_curentCamera.SetPerspectiveProjection( 90.f, WORLD_WIDTH / WORLD_HEIGHT, 0.000000001f );
+// 	m_curentCamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
+// 	m_curentCamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
+// 	g_theRenderer->BeginCamera( &m_curentCamera );
 }
 
 //--------------------------------------------------------------------------
 /**
 * UpdateMap
 */
-void Game::UpdateMap( unsigned int index )
+void Game::UpdateMap( float deltaSec, unsigned int index )
 {
-	ASSERT_OR_DIE( index < m_maps.size(), Stringf( "Invalid index of: %u into the maps.", index ) );
-	m_maps[index]->Update();
+	ASSERT_OR_DIE( index < m_maps.size() && index >= 0, Stringf( "Invalid index of: %u into the maps.", index ) );
+	m_maps[index]->Update( deltaSec );
 }
 
 //--------------------------------------------------------------------------

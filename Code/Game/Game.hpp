@@ -1,5 +1,6 @@
 #pragma once
 #include "Game/GameCommon.hpp"
+#include "Engine/Core/EventSystem.hpp"
 
 class Shader;
 class MeshGPU;
@@ -31,11 +32,11 @@ private:
 
 	//Update
 	void UpdateCamera( float deltaSeconds );
-	void UpdateMap( unsigned int  index );
+	void UpdateMap( float deltaSec, unsigned int  index );
 
 private:
 	// Getters
-	Camera* GetCurrentCamera() { return &m_curentCamera; }
+	Camera* GetCurrentCamera() { return m_curCamera; }
 	static bool Command_SetDirColor( EventArgs& args );
 
 private:
@@ -53,8 +54,8 @@ private:
 	MeshGPU* meshPlainGPU;
 	
 	// Camera
+	Camera* m_curCamera;
 	Camera m_UICamera;
-	Camera m_curentCamera;
 	mutable Camera m_DevColsoleCamera;
 	Vec3 m_camPos = Vec3( 0.0f, 0.0f, -10.0f);
 	Vec3 m_camRot = Vec3( 0.0f, 0.0f, 0.0f);

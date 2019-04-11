@@ -4,11 +4,16 @@
 
 //--------------------------------------------------------------------------
 
+class RenderContext;
 
 //--------------------------------------------------------------------------
 
 class RTSCamera
 {
+public:
+	RTSCamera();
+	~RTSCamera();
+
 public:
 	// Called each frame to update the underlying camera with the RTSCamera's options; 
 	void Update( float deltaSeconds ); 
@@ -16,12 +21,14 @@ public:
 	void SetFocalPoint( Vec3 const &pos ); 
 	void SetZoom( float zoom ); 
 	void SetAngle( float angle ); // really is setting an angle offset
+	void SetTilt( float tilt ); // really is setting an angle offset
 
+	void BindCamera( RenderContext* context );
 
 public:
 	Camera m_camera;
-	Vec3 m_focalPoint; 
-	float m_distance; 
+	Vec3 m_focalPoint = Vec3( 1.0f, 1.0f, 0.0f ); 
+	float m_distance = 5.0f; 
 
 	// configuration - mess with these numbers to get a view you like; 
 	float m_minDistance     = 2.0f;
@@ -32,5 +39,9 @@ public:
 
 	// used for moving from the default
 	float m_angleOffset     = 0.0f; 
+	float m_tiltOffset		= 0.0f;
+
+private:
+	void UpdateMatrix();
 
 }; 
