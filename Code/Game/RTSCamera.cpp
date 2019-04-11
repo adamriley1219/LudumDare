@@ -29,7 +29,7 @@ RTSCamera::~RTSCamera()
 void RTSCamera::Update( float deltaSeconds )
 {
 	UNUSED( deltaSeconds );
-	g_theInputSystem
+//	g_theInputSystem
 	UpdateMatrix();
 }
 
