@@ -10,6 +10,7 @@
 #include "Engine/Physics/PhysicsSystem.hpp"
 #include "Engine/Renderer/Debug/DebugRenderSystem.hpp"
 #include "Game/GameCommon.hpp"
+#include "Game/GameController.hpp"
 
 //--------------------------------------------------------------------------
 // Global Singletons
@@ -22,6 +23,7 @@ RNG* g_theRNG = nullptr;
 PhysicsSystem* g_thePhysicsSystem = nullptr;
 Game* g_theGame = nullptr;
 WindowContext* g_theWindowContext = nullptr;
+GameController* g_theGameController = nullptr;
 
 
 //--------------------------------------------------------------------------
@@ -39,6 +41,7 @@ void App::Startup()
 	g_theAudioSystem = new AudioSystem();
 	g_thePhysicsSystem = new PhysicsSystem();
 	g_theGame = new Game();
+	g_theGameController = new GameController();
 
 	g_theEventSystem->Startup();
 	g_theRenderer->Startup();
@@ -63,6 +66,8 @@ void App::Shutdown()
 	g_theRenderer->Shutdown();
 	g_theEventSystem->Shutdown();
 
+	delete g_theGameController;
+	g_theGameController = nullptr;
 	delete g_theGame;
 	g_theGame = nullptr;
 	delete g_theAudioSystem;
@@ -249,6 +254,7 @@ void App::BeginFrame()
 void App::Update( float deltaSeconds )
 {
 	g_theConsole->			Update( m_time );
+	g_theGameController->	Update( deltaSeconds );
 	g_theGame->				UpdateGame( deltaSeconds );
 	g_theDebugRenderSystem->Update( deltaSeconds );
 }
@@ -278,6 +284,7 @@ void App::Render() const
 */
 void App::EndFrame()
 {
+	g_theRenderer->EndCamera();
 	g_theDebugRenderSystem->EndFrame();
 	g_thePhysicsSystem->	EndFrame();
 	g_theConsole->			EndFrame();

@@ -8,6 +8,7 @@
 #include "Engine/Renderer/Debug/DebugRenderSystem.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/RTSCamera.hpp"
+#include "Game/GameController.hpp"
 
 //--------------------------------------------------------------------------
 /**
@@ -18,6 +19,8 @@ Map::Map( RenderContext* context )
 	m_renderContext = context;
 	m_terrainMaterial = context->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" );
 	m_camera = new RTSCamera();
+	m_camera->m_camera.SetColorTargetView( context->GetColorTargetView() );
+	m_camera->m_camera.SetDepthTargetView( context->GetDepthTargetView() );
 }
 
 //--------------------------------------------------------------------------
@@ -37,6 +40,7 @@ Map::~Map()
 bool Map::Load( char const *filename )
 {
 	UNUSED(filename);
+	m_hasLoaded = true;
 	m_camera->SetFocalPoint( Vec3( 32.0f, 32.0f, 0.0f ) );
 	return Create( 64, 64 );
 }
@@ -59,11 +63,7 @@ bool Map::Create( int tileWidth, int tileHeight )
 */
 void Map::Update( float deltaSec )
 {
-	m_camera->Update( deltaSec );
-	m_camera->BindCamera( m_renderContext );
-	DebugRenderPoint( 0.0f, DEBUG_RENDER_ALWAYS, m_camera->m_focalPoint, Rgba::RED, Rgba::RED, 0.1f );
-	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, "LookAt: %.02f,%.02f,%.02f", m_camera->m_focalPoint.x,  m_camera->m_focalPoint.y,  m_camera->m_focalPoint.z );
-
+	UpdateCamera( deltaSec );
 }
 
 //--------------------------------------------------------------------------
@@ -73,6 +73,15 @@ void Map::Update( float deltaSec )
 void Map::Render() const
 {
 	RenderTerrain();
+}
+
+//--------------------------------------------------------------------------
+/**
+* IsLoaded
+*/
+bool Map::IsLoaded() const
+{
+	return m_hasLoaded;
 }
 
 //--------------------------------------------------------------------------
@@ -150,4 +159,36 @@ void Map::GenerateTerrainMesh()
 int Map::GetVertIndex( int x, int y )
 {
 	return x + y * m_vertDimensions.x;
+}
+
+//--------------------------------------------------------------------------
+/**
+* UpdateCamera
+*/
+void Map::UpdateCamera( float deltaSec )
+{
+	// calc focus point
+	if( !g_theGameController->Shift_Button.IsPressed() )
+	{
+		Vec3 curPos = m_camera->m_focalPoint;
+		Vec2 movement = g_theGameController->GetFramePan() * deltaSec;
+		Vec3 right = m_camera->m_camera.GetRight();
+		Vec3 forward = m_camera->m_camera.GetForward();
+		Vec3 flatForward = Vec3( forward.x, forward.y, 0.0f );
+		flatForward.Normalize();
+
+		m_camera->SetFocalPoint( Clamp( flatForward * movement.y + right * movement.x + curPos, Vec3( -.5f, -.5f, 0.0f ), Vec3( m_tileDimensions.x - .5f, m_tileDimensions.y - .5f, 0.0f ) ) );
+	}
+
+	// calc rotation
+	m_camera->SetAngle( g_theGameController->GetFrameRotation() );
+
+	// calc height
+	m_camera->SetZoom( g_theGameController->GetFrameZoom() );
+
+	m_camera->Update( deltaSec );
+	m_camera->BindCamera( m_renderContext );
+	DebugRenderPoint( 0.0f, DEBUG_RENDER_ALWAYS, m_camera->m_focalPoint, Rgba::RED, Rgba::RED, 0.1f );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, "LookAt: %.02f,%.02f,%.02f", m_camera->m_focalPoint.x,  m_camera->m_focalPoint.y,  m_camera->m_focalPoint.z );
+
 }

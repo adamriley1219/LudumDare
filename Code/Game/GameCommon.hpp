@@ -27,6 +27,9 @@ extern Game* g_theGame;
 class WindowContext;
 extern WindowContext* g_theWindowContext;
 
+class GameController;
+extern GameController* g_theGameController;
+
 //--------------------------------------------------------------------------
 // Constant global variables.
 //--------------------------------------------------------------------------
@@ -35,6 +38,10 @@ constexpr float WORLD_HEIGHT = 5.f;
 constexpr float WORLD_CENTER_X = WORLD_WIDTH / 2.f;
 constexpr float WORLD_CENTER_Y = WORLD_HEIGHT / 2.f;
 
+constexpr float SCREEN_WIDTH = 200.0f;
+constexpr float SCREEN_HEIGHT = 100.0f;
+constexpr float SCREEN_HALF_WIDTH = 200.0f * .5f;
+constexpr float SCREEN_HALF_HEIGHT = 100.0f * .5f;
 
 enum eGameStates
 {

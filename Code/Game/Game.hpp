@@ -1,6 +1,7 @@
 #pragma once
 #include "Game/GameCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
+#include "Engine/Renderer/Camera.hpp"
 
 class Shader;
 class MeshGPU;
@@ -29,10 +30,19 @@ private:
 	//Render
 	void RenderMap( unsigned int index ) const;
 	void RenderLoadingScreen() const;
+	void RenderInit() const;
+	void RenderLoading() const;
+	void RenderMainMenu() const;
 
 	//Update
 	void UpdateCamera( float deltaSeconds );
 	void UpdateMap( float deltaSec, unsigned int  index );
+
+	void InisializeGame();
+	void LoadLevel( unsigned int index );
+
+private:
+	void SwitchStates( eGameStates state );
 
 private:
 	// Getters
@@ -43,6 +53,9 @@ private:
 	eGameStates m_state = GAMESTATE_INIT;
 	unsigned int  m_curMapIdx = 1;
 	std::vector<Map*> m_maps;
+
+private:
+	unsigned int m_loadingFramCount = 0;
 
 private:
 	// Shader
@@ -57,8 +70,6 @@ private:
 	Camera* m_curCamera;
 	Camera m_UICamera;
 	mutable Camera m_DevColsoleCamera;
-	Vec3 m_camPos = Vec3( 0.0f, 0.0f, -10.0f);
-	Vec3 m_camRot = Vec3( 0.0f, 0.0f, 0.0f);
 
 	// Lighting
 	float m_curAmbiant = 0.05f;
@@ -69,6 +80,5 @@ private:
 	unsigned int m_actLights = 1;
 	int shaderType = 0;
 
-	Vec3 input = Vec3::ZERO;
 	float m_gameTime = 0.0f;
 };

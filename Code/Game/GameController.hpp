@@ -1,9 +1,14 @@
 #pragma once
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Math/IntVec2.hpp"
 
-class GameInput
+class GameController
 {
+public:
+	GameController();
+	~GameController();
+
 public:
 	// Called each frame - translates raw input (keyboard/mouse/etc) to 
 	// input used for the game.
@@ -20,10 +25,14 @@ public:
 
 										// A09
 										// eGameAction DequeueNextAction(); 
-
+	void LMousePress();
+	void RMousePress();
+	void LMouseRelease();
+	void RMouseRelease();
+	void WheelMovement( float offset );
 public:
 	// Configuration - Keyboard Input
-	float m_keyboardPanSpeed         = 16.0f; 
+	float m_keyboardPanSpeed         = 32.0f; 
 
 	// Configuration - Mouse Input
 	float m_edgePanSpeed             = 16.0f; // how quickly we pan when using edge-scroll
@@ -31,4 +40,21 @@ public:
 
 	float m_rotationSpeed            = g_PI; 
 	float m_zoomSpeed                = 24.0f; 
+
+	float m_frameZoom				 = 0.0f;
+	float m_frameRotation			 = 0.0f;
+
+	float m_wheelOffset				 = 0.0f;
+
+	IntVec2 m_mousePos;
+
+	KeyButtonState A_Key;
+	KeyButtonState S_Key;
+	KeyButtonState D_Key;
+	KeyButtonState W_Key;
+
+	KeyButtonState L_MouseButton;
+	KeyButtonState R_MouseButton;
+
+	KeyButtonState Shift_Button;
 }; 

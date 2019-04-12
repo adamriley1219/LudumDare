@@ -29,7 +29,6 @@ RTSCamera::~RTSCamera()
 void RTSCamera::Update( float deltaSeconds )
 {
 	UNUSED( deltaSeconds );
-//	g_theInputSystem
 	UpdateMatrix();
 }
 
@@ -48,7 +47,17 @@ void RTSCamera::SetFocalPoint( Vec3 const &pos )
 */
 void RTSCamera::SetZoom( float zoom )
 {
-	m_distance = Clamp( zoom, m_minDistance, m_maxDistance );
+	m_zoom += zoom;
+	m_zoom = Clamp( m_zoom, m_minDistance - m_defaultDist, m_maxDistance - m_defaultDist );
+	m_distance = m_zoom + m_defaultDist;
+	if( m_distance < m_beginTiltDist )
+	{
+		SetTilt( ( m_beginTiltDist / m_distance  ) * -20.0f );
+	}
+	else
+	{
+		SetTilt( 0.0f );
+	}
 }
 
 //--------------------------------------------------------------------------
@@ -57,7 +66,7 @@ void RTSCamera::SetZoom( float zoom )
 */
 void RTSCamera::SetAngle( float angle )
 {
-	m_angleOffset = Clamp( angle, -90.0f, 90.0f );
+	m_angleOffset = Clamp( angle, -180.0f, 180.0f );
 }
 
 //--------------------------------------------------------------------------
@@ -66,7 +75,7 @@ void RTSCamera::SetAngle( float angle )
 */
 void RTSCamera::SetTilt( float tilt )
 {
-	m_tiltOffset = Clamp( tilt, 0.0f, 90.0f );
+	m_tiltOffset = Clamp( tilt, -90.0f, 90.0f );
 }
 
 //--------------------------------------------------------------------------

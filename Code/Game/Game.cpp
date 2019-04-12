@@ -51,27 +51,7 @@ void Game::Startup()
 	m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/default_lit.xml" );
 	g_theRenderer->BindShader( m_shader );
 	
-
-	MeshCPU meshCPU;
-	CPUMeshAddCube( &meshCPU, AABB3( 2.0f, 2.0f, 2.0f ) );
-	meshSquareGPU = new MeshGPU( g_theRenderer );
-	meshSquareGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
-
-	meshCPU.Clear();
-	CPUMeshAddUVSphere( &meshCPU, Vec3::ZERO, 1.5f );
-	meshSphereGPU = new MeshGPU( g_theRenderer );
-	meshSphereGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
-
-	meshCPU.Clear();
-	CPUMeshAddPlain( &meshCPU, AABB2( 2.0f, 2.0f ) );
-	meshPlainGPU = new MeshGPU( g_theRenderer );
-	meshPlainGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
-
-	m_DevColsoleCamera.SetOrthographicProjection( Vec2( -100.0f, -50.0f ), Vec2( 100.0f,  50.0f ) );
-	m_DevColsoleCamera.SetModelMatrix( Matrix44::IDENTITY );
-	
-	m_UICamera.SetOrthographicProjection( Vec2( -100.0f, -50.0f ), Vec2( 100.0f,  50.0f ) );
-	m_UICamera.SetModelMatrix( Matrix44::IDENTITY );
+	g_theWindowContext->LockMouse();
 
 	EventArgs args;
 	g_theDebugRenderSystem->Command_Open( args );
@@ -80,57 +60,8 @@ void Game::Startup()
 	g_theRenderer->SetSpecFactor( m_specFact );
 	g_theRenderer->SetSpecPower( m_specPow );
 
-	LightData light;
-	light.is_direction = 1.0f;
-	light.color = Rgba(1.0f, 1.0f, 1.0f, 1.0f);
-	light.color.a = 1.0f;
-	light.direction = Vec3( -1.0f, -1.0f, 1.0f ).GetNormalized();
-	light.position = Vec3::ZERO;
-	g_theRenderer->EnableLight( 0, light );
-
-	light.is_direction = 0.0f;
-	light.color = Rgba::CYAN;
-	light.color.a = 0.0f;
-	g_theRenderer->EnableLight( 1, light );
-	
-	light.is_direction = 0.0f;
-	light.color = Rgba::BLUE;
-	light.color.a = 0.0f;
-	g_theRenderer->EnableLight( 2, light );
-
-	light.is_direction = 0.0f;
-	light.color = Rgba::MAGENTA;
-	light.color.a = 0.0f;
-	g_theRenderer->EnableLight( 3, light );
-
-	light.is_direction = 0.0f;
-	light.color = Rgba::GREEN;
-	light.color.a = 0.0f;
-	g_theRenderer->EnableLight( 4, light );
-
-	g_theRenderer->SetSpecFactor( m_specFact );
-	g_theRenderer->SetSpecPower( m_specPow );
-	g_theRenderer->SetEmissiveFactor( m_emissiveFac );
-	g_theRenderer->SetAmbientLight( Rgba::WHITE, m_curAmbiant );
-
-
-	g_theEventSystem->SubscribeEventCallbackFunction( "setDirColor", Command_SetDirColor );
-
-	m_couchMat = g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/couch.mat" );
-	matStruct my_struct;
-	my_struct.var = .7f;
-	my_struct.padding = Vec3(0.0f, 0.0f, 0.0f); 
-	m_couchMat->SetUniforms( &my_struct, sizeof(my_struct) );
-
-	Map* editMap =  new Map( g_theRenderer );
-	editMap->Load( "UNUNSED RIGHT NOW" );
-	m_maps.push_back( editMap );
-	editMap =  new Map( g_theRenderer );
-	editMap->Load( "UNUNSED RIGHT NOW" );
-	m_maps.push_back( editMap );
-
 	// Setup UI Camera
-	m_UICamera.SetOrthographicProjection( Vec2( -50.0f, -100.0f ), Vec2( 50.0f,  100.0f ) );
+	m_UICamera.SetOrthographicProjection( Vec2( -SCREEN_HALF_WIDTH, -SCREEN_HALF_HEIGHT ), Vec2( SCREEN_HALF_WIDTH,  SCREEN_HALF_HEIGHT ) );
 	m_UICamera.SetModelMatrix( Matrix44::IDENTITY );
 
 	m_curCamera = &m_UICamera;
@@ -167,25 +98,49 @@ bool Game::HandleKeyPressed( unsigned char keyCode )
 		switch( m_state )
 		{
 		case GAMESTATE_INIT:
-			m_state = GAMESTATE_MAINMENU;
+			SwitchStates( GAMESTATE_MAINMENU );
 			break;
 		case GAMESTATE_MAINMENU:
-			m_state = GAMESTATE_LOADING;
+			SwitchStates( GAMESTATE_LOADING );
 			break;
 		case GAMESTATE_LOADING:
-			m_state = GAMESTATE_GAMEPLAY;
+			SwitchStates( GAMESTATE_GAMEPLAY );
 			break;
 		case GAMESTATE_GAMEPLAY:
-			m_state = GAMESTATE_EDITOR;
+			SwitchStates( GAMESTATE_EDITOR );
 			break;
 		case GAMESTATE_EDITOR:
-			m_state = GAMESTATE_INIT;
+			SwitchStates( GAMESTATE_INIT );
 			break;
 		default:
 			break;
 		}
 	}
 
+	if( keyCode == 'Z' )
+	{
+		switch( m_state )
+		{
+		case GAMESTATE_MAINMENU:
+			m_curMapIdx = 0;
+			SwitchStates( GAMESTATE_LOADING );
+			break;
+		default:
+			break;
+		}
+	}
+	if( keyCode == 'X' )
+	{
+		switch( m_state )
+		{
+		case GAMESTATE_MAINMENU:
+			m_curMapIdx = 1;
+			SwitchStates( GAMESTATE_LOADING );
+			break;
+		default:
+			break;
+		}
+	}
 	//--------------------------------------------------------------------------
 	if( keyCode == 'L' )
 	{
@@ -220,49 +175,7 @@ bool Game::HandleKeyPressed( unsigned char keyCode )
 		g_theRenderer->EnableLight( 0, light );
 	}
 
-	//--------------------------------------------------------------------------
-	if( keyCode == 222 ) // '''
-	{
-		++m_actLights;
-		m_actLights = Clamp( (int) m_actLights, 0, 8 );
-	}
-	if( keyCode == 186 ) // ';'
-	{
-		--m_actLights;
-		m_actLights = Clamp( (int) m_actLights, 0, 8 );
-	}
-
-	//--------------------------------------------------------------------------
-	if( keyCode == 'W' )
-	{
-		input.z = 1.0f;
-		return true;
-	}
-	if( keyCode == 'S' )
-	{
-		input.z = -1.0f;
-		return true;
-	}
-	if( keyCode == 'E' )
-	{
-		input.y = 1.0f;
-		return true;
-	}
-	if( keyCode == 'Q' )
-	{
-		input.y = -1.0f;
-		return true;
-	}
-	if( keyCode == 'A' )
-	{
-		input.x = -1.0f;
-		return true;
-	}
-	if( keyCode == 'D' )
-	{
-		input.x = 1.0f;
-		return true;
-	}
+	
 	return false;
 }
 
@@ -273,37 +186,6 @@ bool Game::HandleKeyPressed( unsigned char keyCode )
 bool Game::HandleKeyReleased( unsigned char keyCode )
 {
 	UNUSED(keyCode);
-	if( keyCode == 'W' )
-	{
-		input.z = 0;
-		m_camPos += m_curCamera->GetForward() * 0.1f;
-		return true;
-	}
-	if( keyCode == 'S' )
-	{
-		input.z = 0;
-		return true;
-	}
-	if( keyCode == 'E' )
-	{
-		input.y = 0;
-		return true;
-	}
-	if( keyCode == 'Q' )
-	{
-		input.y = 0;
-		return true;
-	}
-	if( keyCode == 'A' )
-	{
-		input.x = 0;
-		return true;
-	}
-	if( keyCode == 'D' )
-	{
-		input.x = 0;
-		return true;
-	}
 	return false;
 }
 
@@ -313,16 +195,16 @@ bool Game::HandleKeyReleased( unsigned char keyCode )
 */
 void Game::UpdateGame( float deltaSeconds )
 {
+	m_gameTime += deltaSeconds;
 	switch( m_state )
 	{
 	case GAMESTATE_INIT:
-		m_UICamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
-		m_UICamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
-		g_theRenderer->BeginCamera( &m_UICamera );
+		InisializeGame();
 		break;
 	case GAMESTATE_MAINMENU:
 		break;
 	case GAMESTATE_LOADING:
+		LoadLevel( m_curMapIdx );
 		break;
 	case GAMESTATE_GAMEPLAY:
 		UpdateMap( deltaSeconds, m_curMapIdx );
@@ -334,25 +216,6 @@ void Game::UpdateGame( float deltaSeconds )
 		ERROR_AND_DIE("UNKNOWN STATE IN Game::UpdateGame");
 		break;
 	}
-
-	m_gameTime += deltaSeconds;
-	IntVec2 rawMouseMovement = g_theWindowContext->GetClientMouseRelativeMovement();
-	float rotSpeed = 35.0f;
-	m_camRot.y += 0.005f * rawMouseMovement.x * rotSpeed;
-	m_camRot.x += 0.005f * rawMouseMovement.y * rotSpeed;
-	if( m_camRot.x > 90.0f )
-	{
-		m_camRot.x = 90.0f;
-	}
-	if( m_camRot.x < -90.0f )
-	{
-		m_camRot.x = -90.0f;
-	}
-
-	float speed = 10.0f;
-	m_camPos += m_curCamera->GetForward() * input.z * deltaSeconds * speed;
-	m_camPos += m_curCamera->GetUp() * input.y * deltaSeconds * speed;
-	m_camPos += m_curCamera->GetRight() * input.x * deltaSeconds * speed;
 
 	float screenHeight = g_theDebugRenderSystem->GetScreenHeight() * .5f;
 	float screenWidth = g_theDebugRenderSystem->GetScreenWidth() * .5f;
@@ -373,19 +236,13 @@ void Game::GameRender() const
 	switch( m_state )
 	{
 	case GAMESTATE_INIT:
-		g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
-		DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "INIT" );
-		RenderLoadingScreen();
+		RenderInit();
 		break;
 	case GAMESTATE_MAINMENU:
-		g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
-		g_theRenderer->ClearScreen( Rgba::BLUE );
-		DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_CENTERED, 10.0f, Rgba::WHITE, Rgba::WHITE, "MainMenu" );
+		RenderMainMenu();
 		break;
 	case GAMESTATE_LOADING:
-		g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
-		DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "GameLoding" );
-		RenderLoadingScreen();
+		RenderLoading();
 		break;
 	case GAMESTATE_GAMEPLAY:
 		g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" ) );
@@ -426,6 +283,41 @@ void Game::RenderLoadingScreen() const
 	DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_CENTERED, 10.0f, Rgba::WHITE, Rgba::WHITE, "Loading..." );
 }
 
+
+//--------------------------------------------------------------------------
+/**
+* RenderInit
+*/
+void Game::RenderInit() const
+{
+	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
+	DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "INIT" );
+	RenderLoadingScreen();
+}
+
+//--------------------------------------------------------------------------
+/**
+* RenderLoading
+*/
+void Game::RenderLoading() const
+{
+	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
+	DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "GameLoding" );
+	RenderLoadingScreen();
+}
+
+//--------------------------------------------------------------------------
+/**
+* RenderMainMenu
+*/
+void Game::RenderMainMenu() const
+{
+	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
+	g_theRenderer->ClearScreen( Rgba::BLUE );
+	DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_CENTERED, 10.0f, Rgba::WHITE, Rgba::WHITE, "MainMenu" );
+}
+
+
 //--------------------------------------------------------------------------
 /**
 * UpdateCamera
@@ -446,21 +338,20 @@ void Game::UpdateCamera( float deltaSeconds )
 		break;
 	case GAMESTATE_GAMEPLAY:
 		m_curCamera = &(m_maps[m_curMapIdx]->GetCamera()->m_camera);
+		m_curCamera->SetColorTargetView( g_theRenderer->GetColorTargetView() );
+		m_curCamera->SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
 		g_theRenderer->BeginCamera( m_curCamera );
 		break;
 	case GAMESTATE_EDITOR:
 		m_curCamera = &(m_maps[0]->GetCamera()->m_camera);
+		m_curCamera->SetColorTargetView( g_theRenderer->GetColorTargetView() );
+		m_curCamera->SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
 		g_theRenderer->BeginCamera( m_curCamera );		
 		break;
 	default:
 		ERROR_AND_DIE("UNKNOWN STATE IN Game::UpdateGame");
 		break;
 	}
-// 	m_curentCamera.SetModelMatrix( g_theGame->m_camPos, g_theGame->m_camRot );
-// 	m_curentCamera.SetPerspectiveProjection( 90.f, WORLD_WIDTH / WORLD_HEIGHT, 0.000000001f );
-// 	m_curentCamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
-// 	m_curentCamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
-// 	g_theRenderer->BeginCamera( &m_curentCamera );
 }
 
 //--------------------------------------------------------------------------
@@ -471,6 +362,113 @@ void Game::UpdateMap( float deltaSec, unsigned int index )
 {
 	ASSERT_OR_DIE( index < m_maps.size() && index >= 0, Stringf( "Invalid index of: %u into the maps.", index ) );
 	m_maps[index]->Update( deltaSec );
+}
+
+//--------------------------------------------------------------------------
+/**
+* InisializeGame
+* initGame is to ensure that the game only inits once.
+*/
+static bool initGame = false;
+void Game::InisializeGame()
+{
+	++m_loadingFramCount;
+	if( m_loadingFramCount == 1 )
+	{
+		return;
+	}
+	if( initGame )
+	{
+		SwitchStates( GAMESTATE_MAINMENU );
+		return;
+	}
+	MeshCPU meshCPU;
+	CPUMeshAddCube( &meshCPU, AABB3( 2.0f, 2.0f, 2.0f ) );
+	meshSquareGPU = new MeshGPU( g_theRenderer );
+	meshSquareGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
+
+	meshCPU.Clear();
+	CPUMeshAddUVSphere( &meshCPU, Vec3::ZERO, 1.5f );
+	meshSphereGPU = new MeshGPU( g_theRenderer );
+	meshSphereGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
+
+	meshCPU.Clear();
+	CPUMeshAddPlain( &meshCPU, AABB2( 2.0f, 2.0f ) );
+	meshPlainGPU = new MeshGPU( g_theRenderer );
+	meshPlainGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
+
+	m_DevColsoleCamera.SetOrthographicProjection( Vec2( -100.0f, -50.0f ), Vec2( 100.0f,  50.0f ) );
+	m_DevColsoleCamera.SetModelMatrix( Matrix44::IDENTITY );
+
+
+	LightData light;
+	light.is_direction = 1.0f;
+	light.color = Rgba(1.0f, 1.0f, 1.0f, 1.0f);
+	light.color.a = 1.0f;
+	light.direction = Vec3( -1.0f, -1.0f, 1.0f ).GetNormalized();
+	light.position = Vec3::ZERO;
+	g_theRenderer->EnableLight( 0, light );
+
+	g_theRenderer->SetSpecFactor( m_specFact );
+	g_theRenderer->SetSpecPower( m_specPow );
+	g_theRenderer->SetEmissiveFactor( m_emissiveFac );
+	g_theRenderer->SetAmbientLight( Rgba::WHITE, m_curAmbiant );
+
+
+	g_theEventSystem->SubscribeEventCallbackFunction( "setDirColor", Command_SetDirColor );
+
+	m_couchMat = g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/couch.mat" );
+	matStruct my_struct;
+	my_struct.var = .7f;
+	my_struct.padding = Vec3(0.0f, 0.0f, 0.0f); 
+	m_couchMat->SetUniforms( &my_struct, sizeof(my_struct) );
+
+	Map* editMap =  new Map( g_theRenderer );
+	editMap->Load( "UNUNSED RIGHT NOW" );
+	m_maps.push_back( editMap );
+	editMap =  new Map( g_theRenderer );
+	editMap->Load( "UNUNSED RIGHT NOW" );
+	m_maps.push_back( editMap );
+
+	SwitchStates( GAMESTATE_MAINMENU );
+	initGame = true;
+}
+
+//--------------------------------------------------------------------------
+/**
+* LoadLevel
+*/
+void Game::LoadLevel( unsigned int index )
+{
+	++m_loadingFramCount;
+	if( m_loadingFramCount == 1 )
+	{
+		return;
+	}
+	m_curMapIdx = index;
+	if( (unsigned int) m_maps.size() > index )
+	{
+		SwitchStates( m_curMapIdx == 0 ? GAMESTATE_EDITOR : GAMESTATE_GAMEPLAY );
+		return;
+	}
+	if( !m_maps[index]->IsLoaded() )
+	{
+		m_maps[index]->Load( "UNUSED RIGHT NOW" );
+		SwitchStates( m_curMapIdx == 0 ? GAMESTATE_EDITOR : GAMESTATE_GAMEPLAY );
+	}
+}
+
+//--------------------------------------------------------------------------
+/**
+* SwitchStates
+*/
+void Game::SwitchStates( eGameStates state )
+{
+	if( state == GAMESTATE_INIT || state == GAMESTATE_LOADING )
+	{
+		m_loadingFramCount = 0;
+	}
+	m_state = state;
 }
 
 //--------------------------------------------------------------------------

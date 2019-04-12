@@ -35,6 +35,9 @@ public:
 	void Render() const; 
 
 public:
+	bool IsLoaded() const;
+
+public:
 	AABB2 GetXYBounds() const; 
 	RTSCamera* GetCamera() { return m_camera; }
 
@@ -43,6 +46,9 @@ private:
 	void GenerateTerrainMesh(); 
 
 	int GetVertIndex( int x, int y );
+
+private:
+	void UpdateCamera( float deltaSec );
 
 private: 
 	IntVec2 m_tileDimensions; 
@@ -57,4 +63,8 @@ private:
 	RTSCamera* m_camera = nullptr;
 
 	RenderContext* m_renderContext = nullptr;
+
+private:
+	bool m_hasLoaded = false;
+
 }; 

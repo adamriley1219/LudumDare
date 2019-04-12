@@ -48,7 +48,7 @@
     <ClCompile Include="Entity.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
-    <ClCompile Include="GameInput.cpp">
+    <ClCompile Include="GameController.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,7 +77,7 @@
     <ClInclude Include="Entity.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="GameInput.hpp">
+    <ClInclude Include="GameController.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

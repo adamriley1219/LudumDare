@@ -13,6 +13,7 @@
 #include "Engine/Core/WindowContext.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Game/GameCommon.hpp"
+#include "Game/GameController.hpp"
 #include "Game/App.hpp"
 
 
@@ -94,6 +95,32 @@ static bool AppWindowProc( void* windowHandle, uint32_t wmMessageCode, uintptr_t
 
 		break;
 	}
+	case WM_LBUTTONUP:
+	{
+		g_theGameController->LMouseRelease();
+		break;
+	}
+	case WM_LBUTTONDOWN:
+	{
+		g_theGameController->LMousePress();
+		break;
+	}
+	case WM_RBUTTONUP:
+	{
+		g_theGameController->RMouseRelease();
+		break;
+	}
+	case WM_RBUTTONDOWN:
+	{
+		g_theGameController->RMousePress();
+		break;
+	}
+	case WM_MOUSEWHEEL:
+	{
+		short zDelta = HIWORD( wParam );
+		g_theGameController->WheelMovement( (float) zDelta / 120 );
+		break;
+	}
 	}
 
 	// Send back to Windows any unhandled/unconsumed messages we want other apps to see (e.g. play/pause in music apps, etc.)
@@ -107,24 +134,6 @@ void CreateWindowAndRenderContext( float clientAspect )
 {
 	g_theWindowContext = new WindowContext();
 	g_theWindowContext->Create( APP_NAME, clientAspect, .90f, AppWindowProc ); 
-
-	// this is the end of the windows part
-	// 	PIXELFORMATDESCRIPTOR pixelFormatDescriptor;
-	// 	memset( &pixelFormatDescriptor, 0, sizeof( pixelFormatDescriptor ) );
-	// 	pixelFormatDescriptor.nSize = sizeof( pixelFormatDescriptor );
-	// 	pixelFormatDescriptor.nVersion = 1;
-	// 	pixelFormatDescriptor.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	// 	pixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
-	// 	pixelFormatDescriptor.cColorBits = 24;
-	// 	pixelFormatDescriptor.cDepthBits = 24;
-	// 	pixelFormatDescriptor.cAccumBits = 0;
-	// 	pixelFormatDescriptor.cStencilBits = 8;
-	// 
-	// 	int pixelFormatCode = ChoosePixelFormat( g_displayDeviceContext, &pixelFormatDescriptor );
-	// 	SetPixelFormat( g_displayDeviceContext, pixelFormatCode, &pixelFormatDescriptor );
-	// 	g_openGLRenderingContext = wglCreateContext( g_displayDeviceContext );
-	// 	wglMakeCurrent( g_displayDeviceContext, g_openGLRenderingContext );
-
 
 }
 
