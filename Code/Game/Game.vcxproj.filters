@@ -25,6 +25,9 @@
     <Filter Include="Gameplay\Units">
       <UniqueIdentifier>{5e078faf-20b4-4f3e-bd73-1a6fd637ed1d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{2cac7a78-ffef-4a27-8297-5c652c38fa03}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp">
@@ -50,6 +53,9 @@
     </ClCompile>
     <ClCompile Include="GameController.cpp">
       <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="UIWidget.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -79,6 +85,9 @@
     </ClInclude>
     <ClInclude Include="GameController.hpp">
       <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="UIWidget.hpp">
+      <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

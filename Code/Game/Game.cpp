@@ -5,6 +5,7 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Shaders/Shader.hpp"
 #include "Engine/Renderer/Material.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec2.hpp"
@@ -21,6 +22,7 @@
 #include "Engine/Renderer/Debug/DebugRenderSystem.hpp"
 #include "Engine/Core/Vertex/Vertex_LIT.hpp"
 #include "Game/Map.hpp"
+#include "Game/UIWidget.hpp"
 #include <vector>
 
 #include <Math.h>
@@ -314,6 +316,35 @@ void Game::RenderMainMenu() const
 {
 	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
 	g_theRenderer->ClearScreen( Rgba::BLUE );
+
+	UICanvas canvas;
+	UICanvas* child = canvas.CreateChild<UICanvas>();
+	child->m_pivot = Vec2::ALIGN_Bottom_LEFT;
+	child->m_virtualPosition = Vec4( .0f, .0f, 1, 1 );
+	child->m_virtualSize = Vec4( .0f, .0f, 20.f, 20.0f );
+	child->m_color = Rgba::RED;
+
+	child = canvas.CreateChild<UICanvas>();
+	child->m_pivot = Vec2::ALIGN_TOP_LEFT;
+	child->m_virtualPosition = Vec4( .0f, 1.0f, 1, -1 );
+	child->m_virtualSize = Vec4( .0f, .0f, 20.f, 20.0f );
+	child->m_color = Rgba::GREEN;
+
+	child = canvas.CreateChild<UICanvas>();
+	child->m_pivot = Vec2::ALIGN_TOP_RIGHT;
+	child->m_virtualPosition = Vec4( 1.0f, 1.0f, -1, -1 );
+	child->m_virtualSize = Vec4( .0f, .0f, 20.f, 20.0f );
+	child->m_color = Rgba::BLUE;
+
+	child = canvas.CreateChild<UICanvas>();
+	child->m_pivot = Vec2::ALIGN_CENTERED;
+	child->m_virtualPosition = Vec4( .5f, .5f, 0, 0 );
+	child->m_virtualSize = Vec4( .0f, .0f, 20.f, 40.0f );
+	child->m_color = Rgba::BLUE;
+
+	canvas.UpdateBounds( AABB2( SCREEN_WIDTH, SCREEN_HEIGHT ) );
+	canvas.Render();
+
 	DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_CENTERED, 10.0f, Rgba::WHITE, Rgba::WHITE, "MainMenu" );
 }
 
