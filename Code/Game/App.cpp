@@ -206,7 +206,10 @@ bool App::HandleKeyReleased( unsigned char keyCode )
 */
 bool App::HandleQuitRequested()
 {
-	m_isQuitting = true;
+	if( !g_theGame->HandleQuitRequest() )
+	{
+		m_isQuitting = true;
+	}
 	return true;
 }
 

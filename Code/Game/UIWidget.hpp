@@ -19,8 +19,8 @@ public:
 	UIWidget(); 
 	virtual ~UIWidget(); // virtual dctr - why?  Baseline this should kill all my children; 
 
-	void UpdateBounds( const AABB2& container ); 
-	void ProcessInput( Event& evt ); // handles input - may consume the event (but it is still passed about to help update state)
+	virtual void UpdateBounds( const AABB2& container ); 
+	virtual void ProcessInput( Event& evt ); // handles input - may consume the event (but it is still passed about to help update state)
 	virtual void Render() const; // assumes a camera has already been set; 
 
 	UIWidget* AddChild( UIWidget *widget ); 
@@ -78,26 +78,82 @@ public:
 	~UICanvas();
 
 	virtual void Render() const;
+	virtual void UpdateBounds( const AABB2& container );
 
-	Rgba m_color = Rgba::GRAY;
+	Rgba m_fillColor = Rgba::INVISABLE;
+	Rgba m_boarderColor = Rgba::INVISABLE;
+	float m_boarderThickness = 0.0f;
+	float m_boarderScaleWithParent = true;
+
+private:
+	AABB2 m_boarderBounds;
+
 };
 
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
 class UILabel : public UIWidget
 {
-	// implement me
-	// ...
+public:
+	UILabel();
+	~UILabel();
+
+	virtual void Render() const;
+
+	Rgba m_color = Rgba::WHITE;
+	std::string m_text = "";
+
+	std::string m_font = "SquirrelFixedFont";
+
 }; 
 
 
 
+enum eButtonSelectState
+{
+	BUTTON_STATE_NUTRAL,
+	BUTTON_STATE_SELECTED,
+	BUTTON_STATE_HOVERED
+};
+
 //------------------------------------------------------------------------
 class UIButton : public UIWidget
 {
+public:
+	UIButton();
+	~UIButton();
+
+	virtual void Render() const;
+	virtual void UpdateBounds( const AABB2& container );
+	virtual void ProcessInput( Event& evt );
 	void Click();
 
+
+	Rgba m_hoveredColor = Rgba::WHITE;
+	Rgba m_selectedColor = Rgba::WHITE;
+	Rgba m_nutralColor = Rgba::WHITE;
+
+	Rgba m_nutralBoarderColor = Rgba::WHITE;
+	Rgba m_hoveredBoarderColor = Rgba::WHITE;
+	Rgba m_selectedBoarderColor = Rgba::WHITE;
+
+	float m_boarderThickness = 0.0f;
+	float m_boarderScaleWithParent = true;
+
+	bool m_useText = true;
+	std::string m_text = "";
+	std::string m_font = "SquirrelFixedFont";
+
+	std::string m_texturePath = "";
+
+
 	std::string m_eventOnClick = "play map=level0.map";
+
+	eButtonSelectState m_state = BUTTON_STATE_NUTRAL;
+
+private:
+	AABB2 m_boarderBounds;
+
 }; 
 
 //------------------------------------------------------------------------
@@ -127,7 +183,7 @@ class UIRadioGroup
 {
 	friend class UIWidget;
 
-private:
+public:
 	std::vector<UIWidget*> m_widgets; 
 
 }; 

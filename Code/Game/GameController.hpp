@@ -25,6 +25,9 @@ public:
 
 										// A09
 										// eGameAction DequeueNextAction(); 
+	Vec2 GetScreenMousePos();
+	Vec3 GetWorldMousePos();
+
 	void LMousePress();
 	void RMousePress();
 	void LMouseRelease();
@@ -52,9 +55,6 @@ public:
 	KeyButtonState S_Key;
 	KeyButtonState D_Key;
 	KeyButtonState W_Key;
-
-	KeyButtonState L_MouseButton;
-	KeyButtonState R_MouseButton;
 
 	KeyButtonState Shift_Button;
 }; 

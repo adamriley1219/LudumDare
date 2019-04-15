@@ -2,6 +2,8 @@
 #include "Game/GameCommon.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Renderer/Camera.hpp"
+#include "Game/UIWidget.hpp"
+
 
 class Shader;
 class MeshGPU;
@@ -13,6 +15,7 @@ class Map;
 class Game
 {
 	friend App;
+	friend GameController;
 public:
 	Game();
 	~Game();
@@ -22,6 +25,7 @@ public:
 
 	bool HandleKeyPressed( unsigned char keyCode );
 	bool HandleKeyReleased( unsigned char keyCode );
+	bool HandleQuitRequest();
 
 	void GameRender() const;
 	void UpdateGame( float deltaSeconds );
@@ -33,13 +37,29 @@ private:
 	void RenderInit() const;
 	void RenderLoading() const;
 	void RenderMainMenu() const;
+	void RenderEditor() const;
+
+	// UI Setup
+	void SetupMainMenuUI();
+	void SetupEditorUI();
 
 	//Update
 	void UpdateCamera( float deltaSeconds );
+	void UpdateMainMenu( float deltaSeconds ); 
 	void UpdateMap( float deltaSec, unsigned int  index );
+	void UpdateEditor( float deltaSec );
+	void UpdateEditorUI( float deltaSec );
+
+	void LMouseDown();
+	void LMouseUp();
+	void RMouseDown();
+	void RMouseUp();
 
 	void InisializeGame();
 	void LoadLevel( unsigned int index );
+
+private:
+	static bool LoadToLevel( EventArgs& args );
 
 private:
 	void SwitchStates( eGameStates state );
@@ -47,7 +67,6 @@ private:
 private:
 	// Getters
 	Camera* GetCurrentCamera() { return m_curCamera; }
-	static bool Command_SetDirColor( EventArgs& args );
 
 private:
 	eGameStates m_state = GAMESTATE_INIT;
@@ -62,14 +81,17 @@ private:
 	Material* m_couchMat = nullptr;
 
 	Shader* m_shader = nullptr;
-	MeshGPU* meshSquareGPU;
-	MeshGPU* meshSphereGPU;
-	MeshGPU* meshPlainGPU;
 	
 	// Camera
 	Camera* m_curCamera;
-	Camera m_UICamera;
+	mutable Camera m_UICamera;
 	mutable Camera m_DevColsoleCamera;
+
+	// UI
+	UICanvas m_mainMenuCanvis;
+	UIRadioGroup* m_mainMenuRadGroup = nullptr;
+	UICanvas m_editorCanvis;
+	UIRadioGroup* m_editorRadGroup = nullptr;
 
 	// Lighting
 	float m_curAmbiant = 0.05f;

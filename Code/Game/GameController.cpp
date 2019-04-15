@@ -3,6 +3,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/WindowContext.hpp"
 #include "Game/Game.hpp"
+#include "Game/RTSCamera.hpp"
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -39,11 +40,13 @@ void GameController::Update( float deltaSec )
 
 	if( Shift_Button.WasJustPressed() )
 	{
+		g_theWindowContext->SetMouseMode( MOUSE_MODE_RELATIVE );
 		g_theWindowContext->HideMouse();
 		g_theWindowContext->UnlockMouse();
 	}
 	if( Shift_Button.WasJustReleased() )
 	{
+		g_theWindowContext->SetMouseMode( MOUSE_MODE_ABSOLUTE );
 		g_theWindowContext->SetClientMousePosition( m_mousePos );
 		g_theWindowContext->ShowMouse();
 		g_theWindowContext->LockMouse();
@@ -131,11 +134,34 @@ bool GameController::IsRotating() const
 
 //--------------------------------------------------------------------------
 /**
+* GetScreenMousePos
+*/
+Vec2 GameController::GetScreenMousePos()
+{
+	IntVec2 rawMouseMovement = g_theWindowContext->GetClientMousePosition();
+
+	Vec3 worldCamPos = g_theGame->m_UICamera.GetClientToWorld( rawMouseMovement );
+	return Vec2( worldCamPos.x, worldCamPos.y );
+}
+
+//--------------------------------------------------------------------------
+/**
+* GetWorldMousePos
+*/
+Vec3 GameController::GetWorldMousePos()
+{
+	IntVec2 rawMouseMovement = g_theWindowContext->GetClientMousePosition();
+
+	return g_theGame->m_curCamera->GetClientToWorld( rawMouseMovement );
+}
+
+//--------------------------------------------------------------------------
+/**
 * LMousePress
 */
 void GameController::LMousePress()
 {
-	L_MouseButton.UpdateStatus( true );
+	g_theGame->LMouseUp();
 }
 
 //--------------------------------------------------------------------------
@@ -144,7 +170,7 @@ void GameController::LMousePress()
 */
 void GameController::RMousePress()
 {
-	R_MouseButton.UpdateStatus( true );
+	g_theGame->LMouseDown();
 }
 
 //--------------------------------------------------------------------------
@@ -153,7 +179,7 @@ void GameController::RMousePress()
 */
 void GameController::LMouseRelease()
 {
-	L_MouseButton.UpdateStatus( false );
+	g_theGame->RMouseDown();
 }
 
 //--------------------------------------------------------------------------
@@ -162,7 +188,7 @@ void GameController::LMouseRelease()
 */
 void GameController::RMouseRelease()
 {
-	R_MouseButton.UpdateStatus( false );
+	g_theGame->RMouseUp();
 }
 
 //--------------------------------------------------------------------------

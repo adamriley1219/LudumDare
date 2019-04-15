@@ -64,9 +64,8 @@ static bool AppWindowProc( void* windowHandle, uint32_t wmMessageCode, uintptr_t
 		{
 			if( !g_theConsole->HandleESCPress() )
 			{
-				g_theEventSystem->FireEvent( "quit" );
+				g_theApp->HandleQuitRequested();
 			}
-			//g_theApp->HandleQuitRequested();
 			return true; 
 		}
 

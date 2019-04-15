@@ -22,7 +22,7 @@
 #include "Engine/Renderer/Debug/DebugRenderSystem.hpp"
 #include "Engine/Core/Vertex/Vertex_LIT.hpp"
 #include "Game/Map.hpp"
-#include "Game/UIWidget.hpp"
+#include "Game/GameController.hpp"
 #include <vector>
 
 #include <Math.h>
@@ -75,13 +75,8 @@ void Game::Startup()
 */
 void Game::Shutdown()
 {
-	delete meshSquareGPU;
-	meshSquareGPU = nullptr;
-	delete meshSphereGPU;
-	meshSphereGPU = nullptr;
-	delete meshPlainGPU;
-	meshPlainGPU = nullptr;
-
+	SAFE_DELETE(m_mainMenuRadGroup);
+	SAFE_DELETE(m_editorRadGroup);
 	for( Map* map : m_maps )
 	{
 		delete map;
@@ -193,6 +188,22 @@ bool Game::HandleKeyReleased( unsigned char keyCode )
 
 //--------------------------------------------------------------------------
 /**
+* HandleQuitRequest
+*/
+bool Game::HandleQuitRequest()
+{
+	if( m_state == GAMESTATE_GAMEPLAY || m_state == GAMESTATE_EDITOR )
+	{
+		m_state = GAMESTATE_MAINMENU;
+		Event event("unselect_all");
+		m_mainMenuCanvis.ProcessInput( event );
+		return true;
+	}
+	return false;
+}
+
+//--------------------------------------------------------------------------
+/**
 * UpdateGame
 */
 void Game::UpdateGame( float deltaSeconds )
@@ -204,6 +215,7 @@ void Game::UpdateGame( float deltaSeconds )
 		InisializeGame();
 		break;
 	case GAMESTATE_MAINMENU:
+		UpdateMainMenu( deltaSeconds );
 		break;
 	case GAMESTATE_LOADING:
 		LoadLevel( m_curMapIdx );
@@ -212,7 +224,7 @@ void Game::UpdateGame( float deltaSeconds )
 		UpdateMap( deltaSeconds, m_curMapIdx );
 		break;
 	case GAMESTATE_EDITOR:
-		UpdateMap( deltaSeconds, 0 ); 
+		UpdateEditor( deltaSeconds ); 
 		break;
 	default:
 		ERROR_AND_DIE("UNKNOWN STATE IN Game::UpdateGame");
@@ -247,14 +259,11 @@ void Game::GameRender() const
 		RenderLoading();
 		break;
 	case GAMESTATE_GAMEPLAY:
-		g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" ) );
-		DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "Gameplay" );
 		RenderMap( m_curMapIdx );
 		break;
 	case GAMESTATE_EDITOR:
-		g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" ) );
-		DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "Editor" );
-		RenderMap( 0 );
+		RenderEditor();
+		
 		break;
 	default:
 		ERROR_AND_DIE("UNKNOWN STATE IN Game::GameRender");
@@ -272,6 +281,7 @@ void Game::GameRender() const
 void Game::RenderMap( unsigned int index ) const
 {
 	ASSERT_OR_DIE( index < m_maps.size(), Stringf( "Invalid index of: %u into the maps.", index ) );
+	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" ) );
 	m_maps[index]->Render();
 }
 
@@ -317,35 +327,156 @@ void Game::RenderMainMenu() const
 	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
 	g_theRenderer->ClearScreen( Rgba::BLUE );
 
-	UICanvas canvas;
-	UICanvas* child = canvas.CreateChild<UICanvas>();
-	child->m_pivot = Vec2::ALIGN_Bottom_LEFT;
-	child->m_virtualPosition = Vec4( .0f, .0f, 1, 1 );
-	child->m_virtualSize = Vec4( .0f, .0f, 20.f, 20.0f );
-	child->m_color = Rgba::RED;
+	m_mainMenuCanvis.Render();
+}
 
-	child = canvas.CreateChild<UICanvas>();
-	child->m_pivot = Vec2::ALIGN_TOP_LEFT;
-	child->m_virtualPosition = Vec4( .0f, 1.0f, 1, -1 );
-	child->m_virtualSize = Vec4( .0f, .0f, 20.f, 20.0f );
-	child->m_color = Rgba::GREEN;
 
-	child = canvas.CreateChild<UICanvas>();
-	child->m_pivot = Vec2::ALIGN_TOP_RIGHT;
-	child->m_virtualPosition = Vec4( 1.0f, 1.0f, -1, -1 );
-	child->m_virtualSize = Vec4( .0f, .0f, 20.f, 20.0f );
-	child->m_color = Rgba::BLUE;
+//--------------------------------------------------------------------------
+/**
+* RenderEditor
+*/
+void Game::RenderEditor() const
+{
+	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" ) );
+	m_maps[0]->Render();
+	g_theRenderer->EndCamera();
+	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
+	m_UICamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
+	m_UICamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
+	g_theRenderer->BeginCamera( &m_UICamera );
+	m_editorCanvis.Render();
+}
 
-	child = canvas.CreateChild<UICanvas>();
-	child->m_pivot = Vec2::ALIGN_CENTERED;
-	child->m_virtualPosition = Vec4( .5f, .5f, 0, 0 );
-	child->m_virtualSize = Vec4( .0f, .0f, 20.f, 40.0f );
-	child->m_color = Rgba::BLUE;
+//--------------------------------------------------------------------------
+/**
+* SetupMainMenuUI
+*/
+void Game::SetupMainMenuUI()
+{
+	m_mainMenuRadGroup = new UIRadioGroup();
 
-	canvas.UpdateBounds( AABB2( SCREEN_WIDTH, SCREEN_HEIGHT ) );
-	canvas.Render();
+	m_mainMenuCanvis.m_pivot = Vec2::ALIGN_CENTERED;
+	m_mainMenuCanvis.m_virtualSize = Vec4( 1.0f, 1.0f, 0.f, 0.f );
+	m_mainMenuCanvis.m_fillColor = Rgba( 0.2f, .7f, 0.1f );
+	m_mainMenuCanvis.m_boarderColor = Rgba::DARK_GREEN;
+	m_mainMenuCanvis.m_boarderThickness = ( SinDegrees( m_gameTime * 90.f ) + 2.0f ) * .5f;
 
-	DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_CENTERED, 10.0f, Rgba::WHITE, Rgba::WHITE, "MainMenu" );
+	UILabel* textchild = m_mainMenuCanvis.CreateChild<UILabel>();
+	textchild->m_pivot = Vec2::ALIGN_CENTERED;
+	textchild->m_virtualPosition = Vec4( .5f, .9f, 0, 0 );
+	textchild->m_virtualSize = Vec4( .40f, .40f, 0.0f, 0.0f );
+	textchild->m_text = "--RTS TITLE--";
+	textchild->m_color = Rgba::BLACK;
+
+	UIButton* button = m_mainMenuCanvis.CreateChild<UIButton>();
+	button->m_pivot = Vec2::ALIGN_CENTER_LEFT;
+	button->m_virtualPosition = Vec4( .2f, .5f, 0, 0 );
+	button->m_virtualSize = Vec4( .0f, .0f, 25.f, 10.0f );
+	button->m_hoveredColor = Rgba::YELLOW;
+	button->m_nutralColor = Rgba::WHITE;
+	button->m_selectedColor = Rgba::BLUE;
+	button->m_useText = true;
+	button->m_text = "Play";
+	button->m_eventOnClick = "play level=1";
+	button->SetRadioGroup( m_mainMenuRadGroup );
+
+	button = m_mainMenuCanvis.CreateChild<UIButton>();
+	button->m_pivot = Vec2::ALIGN_CENTERED;
+	button->m_virtualPosition = Vec4( .5f, .5f, 0, 0 );
+	button->m_virtualSize = Vec4( .0f, .0f, 25.f, 10.0f );
+	button->m_hoveredColor = Rgba::YELLOW;
+	button->m_nutralColor = Rgba::WHITE;
+	button->m_selectedColor = Rgba::BLUE;
+	button->m_useText = true;
+	button->m_text = "Editor";
+	button->m_eventOnClick = "play level=0";
+	button->SetRadioGroup( m_mainMenuRadGroup );
+
+	button = m_mainMenuCanvis.CreateChild<UIButton>();
+	button->m_pivot = Vec2::ALIGN_CENTER_RIGHT;
+	button->m_virtualPosition = Vec4( .8f, .5f, 0, 0 );
+	button->m_virtualSize = Vec4( .0f, .0f, 25.f, 10.0f );
+	button->m_hoveredColor = Rgba::YELLOW;
+	button->m_nutralColor = Rgba::WHITE;
+	button->m_selectedColor = Rgba::BLUE;
+	button->m_useText = true;
+	button->m_text = "Quit";
+	button->m_eventOnClick = "quit";
+	button->SetRadioGroup( m_mainMenuRadGroup );
+}
+
+//--------------------------------------------------------------------------
+/**
+* SetupEditorUI
+*/
+void Game::SetupEditorUI()
+{
+	m_editorRadGroup = new UIRadioGroup();
+
+	m_editorCanvis.m_pivot = Vec2::ALIGN_TOP_LEFT;
+	m_editorCanvis.m_virtualSize = Vec4( 0.0f, 0.0f, 60.0f, 15.f );
+	m_editorCanvis.m_virtualPosition = Vec4( 0.025f, 0.95f, 0.0f, 0.0f );
+	m_editorCanvis.m_fillColor = Rgba::FADED_BLACK;
+	m_editorCanvis.m_boarderColor = Rgba::FADED_GRAY;
+	m_editorCanvis.m_boarderThickness = .01f;
+	
+	float size = 10;
+
+	UIButton* button = m_editorCanvis.CreateChild<UIButton>();
+	button->m_pivot = Vec2::ALIGN_CENTERED;
+	button->m_virtualPosition = Vec4( .1f, .5f, 0, 0 );
+	button->m_virtualSize = Vec4( 0.0f, 0.0f, size, size );
+	button->m_hoveredColor = Rgba::YELLOW;
+	button->m_nutralColor = Rgba::WHITE;
+	button->m_selectedColor = Rgba::BLUE;
+	button->m_useText = false;
+	button->m_texturePath = "Data/Images/Terrain/Dirt_DIFFU.png";
+	button->SetRadioGroup( m_editorRadGroup );
+
+	button = m_editorCanvis.CreateChild<UIButton>();
+	button->m_pivot = Vec2::ALIGN_CENTERED;
+	button->m_virtualPosition = Vec4( .3f, .5f, 0, 0 );
+	button->m_virtualSize = Vec4( 0.0f, 0.0f, size, size );
+	button->m_hoveredColor = Rgba::YELLOW;
+	button->m_nutralColor = Rgba::WHITE;
+	button->m_selectedColor = Rgba::BLUE;
+	button->m_useText = false;
+	button->m_texturePath = "Data/Images/Terrain/Dirt_Stone_DIFFU.png";
+	button->SetRadioGroup( m_editorRadGroup );
+
+	button = m_editorCanvis.CreateChild<UIButton>();
+	button->m_pivot = Vec2::ALIGN_CENTERED;
+	button->m_virtualPosition = Vec4( .5f, .5f, 0, 0 );
+	button->m_virtualSize = Vec4( 0.0f, 0.0f, size, size );
+	button->m_hoveredColor = Rgba::YELLOW;
+	button->m_nutralColor = Rgba::WHITE;
+	button->m_selectedColor = Rgba::BLUE;
+	button->m_useText = false;
+	button->m_texturePath = "Data/Images/Terrain/Grass_DIFFU.png";
+	button->SetRadioGroup( m_editorRadGroup );
+
+	button = m_editorCanvis.CreateChild<UIButton>();
+	button->m_pivot = Vec2::ALIGN_CENTERED;
+	button->m_virtualPosition = Vec4( .7f, .5f, 0, 0 );
+	button->m_virtualSize = Vec4( 0.0f, 0.0f, size, size );
+	button->m_hoveredColor = Rgba::YELLOW;
+	button->m_nutralColor = Rgba::WHITE;
+	button->m_selectedColor = Rgba::BLUE;
+	button->m_useText = false;
+	button->m_texturePath = "Data/Images/Terrain/GrassRubble_DIFFU.png";
+	button->SetRadioGroup( m_editorRadGroup );
+
+	button = m_editorCanvis.CreateChild<UIButton>();
+	button->m_pivot = Vec2::ALIGN_CENTERED;
+	button->m_virtualPosition = Vec4( .9f, .5f, 0, 0 );
+	button->m_virtualSize = Vec4( 0.0f, 0.0f, size, size );
+	button->m_hoveredColor = Rgba::YELLOW;
+	button->m_nutralColor = Rgba::WHITE;
+	button->m_selectedColor = Rgba::BLUE;
+	button->m_useText = false;
+	button->m_texturePath = "Data/Images/Terrain/Stone_DIFFU1.png";
+	button->SetRadioGroup( m_editorRadGroup );
+
 }
 
 
@@ -387,12 +518,98 @@ void Game::UpdateCamera( float deltaSeconds )
 
 //--------------------------------------------------------------------------
 /**
+* UpdateMainMenu
+*/
+void Game::UpdateMainMenu( float deltaSeconds )
+{
+	UNUSED(deltaSeconds);
+	m_mainMenuCanvis.m_boarderThickness = ( SinDegrees( m_gameTime * 90.f ) + 2.0f ) * .5f;
+	m_mainMenuCanvis.UpdateBounds( AABB2( SCREEN_WIDTH, SCREEN_HEIGHT ) );
+	Vec2 mousePos = g_theGameController->GetScreenMousePos();
+	Event event( Stringf("hover x=%f y=%f", mousePos.x, mousePos.y ) );
+	m_mainMenuCanvis.ProcessInput( event );
+}
+
+//--------------------------------------------------------------------------
+/**
 * UpdateMap
 */
 void Game::UpdateMap( float deltaSec, unsigned int index )
 {
 	ASSERT_OR_DIE( index < m_maps.size() && index >= 0, Stringf( "Invalid index of: %u into the maps.", index ) );
 	m_maps[index]->Update( deltaSec );
+}
+
+//--------------------------------------------------------------------------
+/**
+* UpdateEditor
+*/
+void Game::UpdateEditor( float deltaSec )
+{
+	UpdateEditorUI( deltaSec );
+
+
+	m_maps[0]->Update( deltaSec );
+}
+
+//--------------------------------------------------------------------------
+/**
+* UpdateEditorUI
+*/
+void Game::UpdateEditorUI( float deltaSec )
+{
+	UNUSED(deltaSec);
+
+	m_editorCanvis.UpdateBounds( AABB2( SCREEN_WIDTH, SCREEN_HEIGHT ) );
+	Vec2 mousePos = g_theGameController->GetScreenMousePos();
+	Event event( Stringf("hover x=%f y=%f", mousePos.x, mousePos.y ) );
+	m_editorCanvis.ProcessInput( event );
+
+}
+
+//--------------------------------------------------------------------------
+/**
+* LMouseDown
+*/
+void Game::LMouseDown()
+{
+
+}
+
+//--------------------------------------------------------------------------
+/**
+* LMouseUp
+*/
+void Game::LMouseUp()
+{
+	Vec2 mousePos = g_theGameController->GetScreenMousePos();
+	Event event( Stringf("click x=%f y=%f", mousePos.x, mousePos.y ) );
+	if( m_state == GAMESTATE_MAINMENU )
+	{
+		m_mainMenuCanvis.ProcessInput( event );
+	}
+	if( m_state == GAMESTATE_EDITOR )
+	{
+		m_editorCanvis.ProcessInput( event );
+	}
+}
+
+//--------------------------------------------------------------------------
+/**
+* RMouseDown
+*/
+void Game::RMouseDown()
+{
+	
+}
+
+//--------------------------------------------------------------------------
+/**
+* RMouseUp
+*/
+void Game::RMouseUp()
+{
+
 }
 
 //--------------------------------------------------------------------------
@@ -413,21 +630,7 @@ void Game::InisializeGame()
 		SwitchStates( GAMESTATE_MAINMENU );
 		return;
 	}
-	MeshCPU meshCPU;
-	CPUMeshAddCube( &meshCPU, AABB3( 2.0f, 2.0f, 2.0f ) );
-	meshSquareGPU = new MeshGPU( g_theRenderer );
-	meshSquareGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
-
-	meshCPU.Clear();
-	CPUMeshAddUVSphere( &meshCPU, Vec3::ZERO, 1.5f );
-	meshSphereGPU = new MeshGPU( g_theRenderer );
-	meshSphereGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
-
-	meshCPU.Clear();
-	CPUMeshAddPlain( &meshCPU, AABB2( 2.0f, 2.0f ) );
-	meshPlainGPU = new MeshGPU( g_theRenderer );
-	meshPlainGPU->CreateFromCPUMesh<Vertex_LIT>( &meshCPU );
-
+	
 	m_DevColsoleCamera.SetOrthographicProjection( Vec2( -100.0f, -50.0f ), Vec2( 100.0f,  50.0f ) );
 	m_DevColsoleCamera.SetModelMatrix( Matrix44::IDENTITY );
 
@@ -445,8 +648,7 @@ void Game::InisializeGame()
 	g_theRenderer->SetEmissiveFactor( m_emissiveFac );
 	g_theRenderer->SetAmbientLight( Rgba::WHITE, m_curAmbiant );
 
-
-	g_theEventSystem->SubscribeEventCallbackFunction( "setDirColor", Command_SetDirColor );
+	g_theEventSystem->SubscribeEventCallbackFunction( "play", LoadToLevel );
 
 	m_couchMat = g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/couch.mat" );
 	matStruct my_struct;
@@ -463,6 +665,9 @@ void Game::InisializeGame()
 
 	SwitchStates( GAMESTATE_MAINMENU );
 	initGame = true;
+
+	SetupMainMenuUI();
+	SetupEditorUI();
 }
 
 //--------------------------------------------------------------------------
@@ -491,6 +696,17 @@ void Game::LoadLevel( unsigned int index )
 
 //--------------------------------------------------------------------------
 /**
+* LoadToLevel
+*/
+bool Game::LoadToLevel( EventArgs& args )
+{
+	int level = args.GetValue( "level", 0 );
+	g_theGame->LoadLevel( level );
+	return true;
+}
+
+//--------------------------------------------------------------------------
+/**
 * SwitchStates
 */
 void Game::SwitchStates( eGameStates state )
@@ -500,17 +716,4 @@ void Game::SwitchStates( eGameStates state )
 		m_loadingFramCount = 0;
 	}
 	m_state = state;
-}
-
-//--------------------------------------------------------------------------
-/**
-* Command_SetDirColor
-*/
-bool Game::Command_SetDirColor( EventArgs& args )
-{
-	Rgba color = args.GetValue("color", color );
-	LightData light = g_theRenderer->GetLightAtSlot( 0 );
-	light.color = color;
-	g_theRenderer->EnableLight( 0, light );
-	return true;
 }

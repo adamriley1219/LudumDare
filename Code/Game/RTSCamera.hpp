@@ -35,7 +35,7 @@ public:
 	float m_minDistance     = 2.0f;
 	float m_maxDistance     = 16.0f;
 
-	float m_defaultAngle    = -45.0f; 
+	float m_defaultAngle    = -135.0f; 
 	float m_defaultTilt     = 60.0f;
 	float m_defaultDist		= 10.0f;
 	float m_beginTiltDist	= 4.0f;

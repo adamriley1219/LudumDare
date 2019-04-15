@@ -168,17 +168,15 @@ int Map::GetVertIndex( int x, int y )
 void Map::UpdateCamera( float deltaSec )
 {
 	// calc focus point
-	if( !g_theGameController->Shift_Button.IsPressed() )
-	{
-		Vec3 curPos = m_camera->m_focalPoint;
-		Vec2 movement = g_theGameController->GetFramePan() * deltaSec;
-		Vec3 right = m_camera->m_camera.GetRight();
-		Vec3 forward = m_camera->m_camera.GetForward();
-		Vec3 flatForward = Vec3( forward.x, forward.y, 0.0f );
-		flatForward.Normalize();
+	Vec3 curPos = m_camera->m_focalPoint;
+	Vec2 movement = g_theGameController->GetFramePan() * deltaSec;
+	Vec3 right = m_camera->m_camera.GetRight();
+	Vec3 forward = m_camera->m_camera.GetForward();
+	Vec3 flatForward = Vec3( forward.x, forward.y, 0.0f );
+	flatForward.Normalize();
 
-		m_camera->SetFocalPoint( Clamp( flatForward * movement.y + right * movement.x + curPos, Vec3( -.5f, -.5f, 0.0f ), Vec3( m_tileDimensions.x - .5f, m_tileDimensions.y - .5f, 0.0f ) ) );
-	}
+	m_camera->SetFocalPoint( Clamp( flatForward * movement.y + right * movement.x + curPos, Vec3( -.5f, -.5f, 0.0f ), Vec3( m_tileDimensions.x - .5f, m_tileDimensions.y - .5f, 0.0f ) ) );
+	
 
 	// calc rotation
 	m_camera->SetAngle( g_theGameController->GetFrameRotation() );

@@ -66,7 +66,7 @@ void RTSCamera::SetZoom( float zoom )
 */
 void RTSCamera::SetAngle( float angle )
 {
-	m_angleOffset = Clamp( angle, -180.0f, 180.0f );
+	m_angleOffset = Clamp( angle, -90.0f, 90.0f );
 }
 
 //--------------------------------------------------------------------------
