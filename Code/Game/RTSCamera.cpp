@@ -10,7 +10,7 @@
 */
 RTSCamera::RTSCamera()
 {
-	m_camera.SetPerspectiveProjection( 90.f, WORLD_WIDTH / WORLD_HEIGHT, 0.000000001f );
+	SetPerspectiveProjection( 60.f, WORLD_WIDTH / WORLD_HEIGHT, 0.01f );
 }
 
 //--------------------------------------------------------------------------
@@ -38,7 +38,7 @@ void RTSCamera::Update( float deltaSeconds )
 */
 void RTSCamera::SetFocalPoint( Vec3 const &pos )
 {
-	m_focalPoint = pos;
+	m_focusPoint = pos;
 }
 
 //--------------------------------------------------------------------------
@@ -84,9 +84,9 @@ void RTSCamera::SetTilt( float tilt )
 */
 void RTSCamera::BindCamera( RenderContext* context )
 {
-	m_camera.SetColorTargetView( context->GetColorTargetView() );
-	m_camera.SetDepthTargetView( context->GetDepthTargetView() );
-	context->BeginCamera( &m_camera );
+	SetColorTargetView( context->GetColorTargetView() );
+	SetDepthTargetView( context->GetDepthTargetView() );
+	context->BeginCamera( this );
 }
 
 //--------------------------------------------------------------------------
@@ -98,5 +98,5 @@ void RTSCamera::UpdateMatrix()
 	float zDist = SinDegrees( m_tiltOffset + m_defaultTilt ) * m_distance;
 	float xyDist = CosDegrees( m_tiltOffset + m_defaultTilt ) * m_distance;
 	Vec3 camOffset = Vec3( CosDegrees( m_angleOffset + m_defaultAngle ), SinDegrees( m_angleOffset + m_defaultAngle ), 0.0f ) * xyDist + Vec3( 0.0f, 0.0f, -zDist );
-	m_camera.SetModelMatrix( Matrix44::LookAt( camOffset + m_focalPoint, m_focalPoint, Vec3( 0.0f, 0.0f, -1.0f ) ) );
+	SetModelMatrix( Matrix44::LookAt( camOffset + m_focusPoint, m_focusPoint, Vec3( 0.0f, 0.0f, -1.0f ) ) );
 }

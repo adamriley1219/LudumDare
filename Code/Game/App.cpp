@@ -1,5 +1,6 @@
 #include "Game/App.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/Clock.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/RNG.hpp"
@@ -42,6 +43,8 @@ void App::Startup()
 	g_thePhysicsSystem = new PhysicsSystem();
 	g_theGame = new Game();
 	g_theGameController = new GameController();
+
+	ClockSystemStartup();
 
 	g_theEventSystem->Startup();
 	g_theRenderer->Startup();
@@ -246,6 +249,7 @@ void App::BeginFrame()
 	g_theAudioSystem->		BeginFrame();
 	g_thePhysicsSystem->	BeginFrame();
 	g_theDebugRenderSystem->BeginFrame();
+	ClockSystemBeginFrame();
 	++m_frame;
 }
 
@@ -256,10 +260,10 @@ void App::BeginFrame()
 */
 void App::Update( float deltaSeconds )
 {
-	g_theConsole->			Update( m_time );
+	g_theConsole->			Update();
 	g_theGameController->	Update( deltaSeconds );
 	g_theGame->				UpdateGame( deltaSeconds );
-	g_theDebugRenderSystem->Update( deltaSeconds );
+	g_theDebugRenderSystem->Update();
 }
 
 //--------------------------------------------------------------------------

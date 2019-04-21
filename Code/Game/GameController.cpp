@@ -151,8 +151,10 @@ Vec2 GameController::GetScreenMousePos()
 Vec3 GameController::GetWorldMousePos()
 {
 	IntVec2 rawMouseMovement = g_theWindowContext->GetClientMousePosition();
+	Vec3 pos = Vec3( g_theGame->GetCurrentCamera()->GetModelMatrix().GetT() );
+	RTSCamera* cam = (RTSCamera*) g_theGame->GetCurrentCamera();
 
-	return g_theGame->m_curCamera->GetClientToWorld( rawMouseMovement );
+	return g_theGame->m_curCamera->GetClientToWorld( rawMouseMovement, SinDegrees(-pos.z) / CosDegrees( cam->m_distance ) );
 }
 
 //--------------------------------------------------------------------------

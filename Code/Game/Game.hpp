@@ -77,9 +77,6 @@ private:
 	unsigned int m_loadingFramCount = 0;
 
 private:
-	// Shader
-	Material* m_couchMat = nullptr;
-
 	Shader* m_shader = nullptr;
 	
 	// Camera
@@ -94,9 +91,9 @@ private:
 	UIRadioGroup* m_editorRadGroup = nullptr;
 
 	// Lighting
-	float m_curAmbiant = 0.05f;
-	float m_specFact = 1.0;
-	float m_specPow = 20.0f;
+	float m_curAmbiant = 0.7f;
+	float m_specFact = .3f;
+	float m_specPow = 30.0f;
 	float m_emissiveFac = 0.1f;
 
 	unsigned int m_actLights = 1;

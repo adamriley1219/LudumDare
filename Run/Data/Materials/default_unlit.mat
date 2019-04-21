@@ -3,7 +3,7 @@
 
 
 <material id="defaultUnlit"
-  shader="Data/Shaders/devShader.xml">
+  shader="Data/Shaders/shader.xml">
 
   <diffuse src="Data/Images/Couch/example_colour.png" samplerType="point" />
   <normal  src="Data/Images/Couch/example_normal.png" samplerType="linear" />

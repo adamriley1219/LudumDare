@@ -8,7 +8,8 @@ class RenderContext;
 
 //--------------------------------------------------------------------------
 
-class RTSCamera
+class RTSCamera 
+	: public Camera
 {
 public:
 	RTSCamera();
@@ -26,8 +27,7 @@ public:
 	void BindCamera( RenderContext* context );
 
 public:
-	Camera m_camera;
-	Vec3 m_focalPoint = Vec3( 1.0f, 1.0f, 0.0f ); 
+	Vec3 m_focusPoint = Vec3( 1.0f, 1.0f, 0.0f ); 
 	float m_distance = 10.0f; 
 	float m_zoom	 = 0.0f;
 
@@ -35,7 +35,7 @@ public:
 	float m_minDistance     = 2.0f;
 	float m_maxDistance     = 16.0f;
 
-	float m_defaultAngle    = -135.0f; 
+	float m_defaultAngle    = -115.0f; 
 	float m_defaultTilt     = 60.0f;
 	float m_defaultDist		= 10.0f;
 	float m_beginTiltDist	= 4.0f;

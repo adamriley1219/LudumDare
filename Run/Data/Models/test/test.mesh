@@ -1,0 +1,9 @@
+<mesh id="test"
+   src="test/test_cube.obj"
+	invert="false"
+	tangents="true"
+	scale=".2f"
+	transform="-y -z -x" 
+	material="Data/Models/test/test_cube.mat"
+	/>
+</mesh>

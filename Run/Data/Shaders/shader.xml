@@ -13,7 +13,7 @@
          write="true"
          test="lequal" />
     <blend
-         mode="opaque" />
+         mode="alpha" />
     <raster
          cull="back"
          clockwise="false"

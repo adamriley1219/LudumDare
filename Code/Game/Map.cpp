@@ -3,8 +3,10 @@
 #include "Engine/Core/MeshCPU.hpp"
 #include "Engine/Renderer/MeshGPU.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Core/Vertex/Vertex_LIT.hpp"
+#include "Engine/Renderer/RenderContext.hpp"
+#include "Engine/Renderer/Shaders/Shader.hpp"
+#include "Engine/Renderer/Model.hpp"
 #include "Engine/Renderer/Debug/DebugRenderSystem.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/RTSCamera.hpp"
@@ -19,8 +21,8 @@ Map::Map( RenderContext* context )
 	m_renderContext = context;
 	m_terrainMaterial = context->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" );
 	m_camera = new RTSCamera();
-	m_camera->m_camera.SetColorTargetView( context->GetColorTargetView() );
-	m_camera->m_camera.SetDepthTargetView( context->GetDepthTargetView() );
+	m_camera->SetColorTargetView( context->GetColorTargetView() );
+	m_camera->SetDepthTargetView( context->GetDepthTargetView() );
 }
 
 //--------------------------------------------------------------------------
@@ -64,6 +66,9 @@ bool Map::Create( int tileWidth, int tileHeight )
 void Map::Update( float deltaSec )
 {
 	UpdateCamera( deltaSec );
+ 	Vec3 mousePos = g_theGameController->GetWorldMousePos();
+ 	//DebugRenderPoint( 0.0f, DEBUG_RENDER_USE_DEPTH, mousePos, Rgba::BLUE, Rgba::BLUE, 0.01f );
+ 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, "Mouse World Pos: %f, %f, %f", mousePos.x, mousePos.y, mousePos.z );
 }
 
 //--------------------------------------------------------------------------
@@ -73,6 +78,15 @@ void Map::Update( float deltaSec )
 void Map::Render() const
 {
 	RenderTerrain();
+	Model model( g_theRenderer, "building/towncenter" );
+	Model model2( g_theRenderer, "test/test" );
+
+	Vec3 mousePos = g_theGameController->GetWorldMousePos();
+	model2.m_model = Matrix44::MakeTranslation3D( Vec3( mousePos.x, mousePos.y, 0.0f ) );
+	model.m_model = Matrix44::MakeTranslation3D( Vec3( m_tileDimensions.x * .5f, m_tileDimensions.y * .5f, 0.0f ) );
+
+	g_theRenderer->DrawModel( &model2 );
+	g_theRenderer->DrawModel( &model );
 }
 
 //--------------------------------------------------------------------------
@@ -168,10 +182,10 @@ int Map::GetVertIndex( int x, int y )
 void Map::UpdateCamera( float deltaSec )
 {
 	// calc focus point
-	Vec3 curPos = m_camera->m_focalPoint;
+	Vec3 curPos = m_camera->m_focusPoint;
 	Vec2 movement = g_theGameController->GetFramePan() * deltaSec;
-	Vec3 right = m_camera->m_camera.GetRight();
-	Vec3 forward = m_camera->m_camera.GetForward();
+	Vec3 right = m_camera->GetRight();
+	Vec3 forward = m_camera->GetForward();
 	Vec3 flatForward = Vec3( forward.x, forward.y, 0.0f );
 	flatForward.Normalize();
 
@@ -186,7 +200,7 @@ void Map::UpdateCamera( float deltaSec )
 
 	m_camera->Update( deltaSec );
 	m_camera->BindCamera( m_renderContext );
-	DebugRenderPoint( 0.0f, DEBUG_RENDER_ALWAYS, m_camera->m_focalPoint, Rgba::RED, Rgba::RED, 0.1f );
-	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, "LookAt: %.02f,%.02f,%.02f", m_camera->m_focalPoint.x,  m_camera->m_focalPoint.y,  m_camera->m_focalPoint.z );
+	//DebugRenderPoint( 0.0f, DEBUG_RENDER_ALWAYS, m_camera->m_focusPoint, Rgba::RED, Rgba::RED, 0.1f );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, "LookAt: %.02f,%.02f,%.02f", m_camera->m_focusPoint.x,  m_camera->m_focusPoint.y,  m_camera->m_focusPoint.z );
 
 }

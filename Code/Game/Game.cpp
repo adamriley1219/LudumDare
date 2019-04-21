@@ -23,6 +23,7 @@
 #include "Engine/Core/Vertex/Vertex_LIT.hpp"
 #include "Game/Map.hpp"
 #include "Game/GameController.hpp"
+#include "Engine/Renderer/Model.hpp"
 #include <vector>
 
 #include <Math.h>
@@ -90,54 +91,7 @@ void Game::Shutdown()
 */
 bool Game::HandleKeyPressed( unsigned char keyCode )
 {
-	if( keyCode == 'M' )
-	{
-		switch( m_state )
-		{
-		case GAMESTATE_INIT:
-			SwitchStates( GAMESTATE_MAINMENU );
-			break;
-		case GAMESTATE_MAINMENU:
-			SwitchStates( GAMESTATE_LOADING );
-			break;
-		case GAMESTATE_LOADING:
-			SwitchStates( GAMESTATE_GAMEPLAY );
-			break;
-		case GAMESTATE_GAMEPLAY:
-			SwitchStates( GAMESTATE_EDITOR );
-			break;
-		case GAMESTATE_EDITOR:
-			SwitchStates( GAMESTATE_INIT );
-			break;
-		default:
-			break;
-		}
-	}
 
-	if( keyCode == 'Z' )
-	{
-		switch( m_state )
-		{
-		case GAMESTATE_MAINMENU:
-			m_curMapIdx = 0;
-			SwitchStates( GAMESTATE_LOADING );
-			break;
-		default:
-			break;
-		}
-	}
-	if( keyCode == 'X' )
-	{
-		switch( m_state )
-		{
-		case GAMESTATE_MAINMENU:
-			m_curMapIdx = 1;
-			SwitchStates( GAMESTATE_LOADING );
-			break;
-		default:
-			break;
-		}
-	}
 	//--------------------------------------------------------------------------
 	if( keyCode == 'L' )
 	{
@@ -194,7 +148,7 @@ bool Game::HandleQuitRequest()
 {
 	if( m_state == GAMESTATE_GAMEPLAY || m_state == GAMESTATE_EDITOR )
 	{
-		m_state = GAMESTATE_MAINMENU;
+		SwitchStates( GAMESTATE_MAINMENU );
 		Event event("unselect_all");
 		m_mainMenuCanvis.ProcessInput( event );
 		return true;
@@ -337,7 +291,7 @@ void Game::RenderMainMenu() const
 */
 void Game::RenderEditor() const
 {
-	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" ) );
+	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
 	m_maps[0]->Render();
 	g_theRenderer->EndCamera();
 	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
@@ -499,13 +453,13 @@ void Game::UpdateCamera( float deltaSeconds )
 		m_curCamera = &m_UICamera;
 		break;
 	case GAMESTATE_GAMEPLAY:
-		m_curCamera = &(m_maps[m_curMapIdx]->GetCamera()->m_camera);
+		m_curCamera = (m_maps[m_curMapIdx]->GetCamera());
 		m_curCamera->SetColorTargetView( g_theRenderer->GetColorTargetView() );
 		m_curCamera->SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
 		g_theRenderer->BeginCamera( m_curCamera );
 		break;
 	case GAMESTATE_EDITOR:
-		m_curCamera = &(m_maps[0]->GetCamera()->m_camera);
+		m_curCamera = (m_maps[0]->GetCamera());
 		m_curCamera->SetColorTargetView( g_theRenderer->GetColorTargetView() );
 		m_curCamera->SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
 		g_theRenderer->BeginCamera( m_curCamera );		
@@ -547,7 +501,6 @@ void Game::UpdateMap( float deltaSec, unsigned int index )
 void Game::UpdateEditor( float deltaSec )
 {
 	UpdateEditorUI( deltaSec );
-
 
 	m_maps[0]->Update( deltaSec );
 }
@@ -620,14 +573,14 @@ void Game::RMouseUp()
 static bool initGame = false;
 void Game::InisializeGame()
 {
-	++m_loadingFramCount;
-	if( m_loadingFramCount == 1 )
-	{
-		return;
-	}
 	if( initGame )
 	{
 		SwitchStates( GAMESTATE_MAINMENU );
+		return;
+	}
+	++m_loadingFramCount;
+	if( m_loadingFramCount == 1 )
+	{
 		return;
 	}
 	
@@ -639,7 +592,7 @@ void Game::InisializeGame()
 	light.is_direction = 1.0f;
 	light.color = Rgba(1.0f, 1.0f, 1.0f, 1.0f);
 	light.color.a = 1.0f;
-	light.direction = Vec3( -1.0f, -1.0f, 1.0f ).GetNormalized();
+	light.direction = Vec3( -1.0f, 1.0f, 1.0f ).GetNormalized();
 	light.position = Vec3::ZERO;
 	g_theRenderer->EnableLight( 0, light );
 
@@ -650,12 +603,7 @@ void Game::InisializeGame()
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "play", LoadToLevel );
 
-	m_couchMat = g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/couch.mat" );
-	matStruct my_struct;
-	my_struct.var = .7f;
-	my_struct.padding = Vec3(0.0f, 0.0f, 0.0f); 
-	m_couchMat->SetUniforms( &my_struct, sizeof(my_struct) );
-
+	
 	Map* editMap =  new Map( g_theRenderer );
 	editMap->Load( "UNUNSED RIGHT NOW" );
 	m_maps.push_back( editMap );
@@ -665,6 +613,8 @@ void Game::InisializeGame()
 
 	SwitchStates( GAMESTATE_MAINMENU );
 	initGame = true;
+
+	//Model model( g_theRenderer, "building/towncenter");
 
 	SetupMainMenuUI();
 	SetupEditorUI();
@@ -701,7 +651,8 @@ void Game::LoadLevel( unsigned int index )
 bool Game::LoadToLevel( EventArgs& args )
 {
 	int level = args.GetValue( "level", 0 );
-	g_theGame->LoadLevel( level );
+	g_theGame->SwitchStates( GAMESTATE_LOADING );
+	g_theGame->m_curMapIdx = level;
 	return true;
 }
 
