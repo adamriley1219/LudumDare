@@ -51,10 +51,5 @@ public:
 
 	IntVec2 m_mousePos;
 
-	KeyButtonState A_Key;
-	KeyButtonState S_Key;
-	KeyButtonState D_Key;
-	KeyButtonState W_Key;
-
 	KeyButtonState Shift_Button;
 }; 

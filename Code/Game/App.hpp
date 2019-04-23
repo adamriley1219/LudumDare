@@ -5,6 +5,7 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Game/Game.hpp"
 
+class Clock;
 
 //--------------------------------------------------------------------------
 class App
@@ -14,7 +15,7 @@ public:
 	~App() {};
 	void Startup();
 	void Shutdown();
-	void RunFrame( float timeFrameBeganSec );
+	void RunFrame();
 
 	bool IsQuitting() const { return m_isQuitting; }
 	bool HandleKeyPressed( unsigned char keyCode );
@@ -28,6 +29,10 @@ public:
 	float GetGlobleTime() const { return m_time; }
 	int GetFrameCount() const { return m_frame; }
 	float GetConsoleTextHeight() const { return m_consoleTextHeight; }
+
+public:
+	Clock* m_gameClock = nullptr;
+
 private:
 	void BeginFrame();
 	void Update( float deltaSeconds );

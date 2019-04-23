@@ -8,6 +8,8 @@
 #include "Engine/Renderer/Shaders/Shader.hpp"
 #include "Engine/Renderer/Model.hpp"
 #include "Engine/Renderer/Debug/DebugRenderSystem.hpp"
+#include "Engine/Core/Time/Clock.hpp"
+#include "Game/App.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/RTSCamera.hpp"
 #include "Game/GameController.hpp"
@@ -80,13 +82,16 @@ void Map::Render() const
 	RenderTerrain();
 	Model model( g_theRenderer, "building/towncenter" );
 	Model model2( g_theRenderer, "test/test" );
+	Model model3( g_theRenderer, "SciFiFighterMk6/SciFi_Fighter-MK6-spec" );
 
 	Vec3 mousePos = g_theGameController->GetWorldMousePos();
-	model2.m_model = Matrix44::MakeTranslation3D( Vec3( mousePos.x, mousePos.y, 0.0f ) );
 	model.m_model = Matrix44::MakeTranslation3D( Vec3( m_tileDimensions.x * .5f, m_tileDimensions.y * .5f, 0.0f ) );
+	model2.m_model = Matrix44::MakeTranslation3D( Vec3( mousePos.x, mousePos.y, 0.0f ) );
+	model3.m_model = Matrix44::MakeTranslation3D( Vec3( m_tileDimensions.x * .5f - 10.f, m_tileDimensions.y * .5f, 0.0f ) ).Concatenate( Matrix44::MakeZRotationDegrees( (float) g_theApp->m_gameClock->GetTotalTime() * 10.0f ) );
 
-	g_theRenderer->DrawModel( &model2 );
 	g_theRenderer->DrawModel( &model );
+	g_theRenderer->DrawModel( &model2 );
+	g_theRenderer->DrawModel( &model3 );
 }
 
 //--------------------------------------------------------------------------

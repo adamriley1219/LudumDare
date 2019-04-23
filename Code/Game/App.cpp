@@ -1,6 +1,6 @@
 #include "Game/App.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/Clock.hpp"
+#include "Engine/Core/Time/Clock.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/RNG.hpp"
@@ -10,6 +10,7 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Physics/PhysicsSystem.hpp"
 #include "Engine/Renderer/Debug/DebugRenderSystem.hpp"
+#include "Engine/Core/Time/Clock.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/GameController.hpp"
 
@@ -45,6 +46,7 @@ void App::Startup()
 	g_theGameController = new GameController();
 
 	ClockSystemStartup();
+	m_gameClock = new Clock( &Clock::Master );
 
 	g_theEventSystem->Startup();
 	g_theRenderer->Startup();
@@ -69,6 +71,8 @@ void App::Shutdown()
 	g_theRenderer->Shutdown();
 	g_theEventSystem->Shutdown();
 
+	SAFE_DELETE( m_gameClock );
+
 	delete g_theGameController;
 	g_theGameController = nullptr;
 	delete g_theGame;
@@ -91,31 +95,24 @@ void App::Shutdown()
 /**
 * RunFrame
 */
-void App::RunFrame( float timeFrameBeganSec )
+void App::RunFrame()
 {
-	double timeLastFrameSec = m_time;
-	m_time = timeFrameBeganSec;
-
-	float deltaTime = (float) ( timeFrameBeganSec - timeLastFrameSec );
-
-	deltaTime = Clamp( deltaTime, 0.0f, 0.1f );
-
-	if( m_isPaused )
+	if( m_isSlowMo )
 	{
-		deltaTime = 0.0f;
-	}
-	else if( m_isSlowMo )
-	{
-		deltaTime *= 0.1f;
+		m_gameClock->Dilate( 0.1f );
 	}
 	else if( m_isFastMo )
 	{
-		deltaTime *= 4.0f;
+		m_gameClock->Dilate( 4.0f );
+	}
+	else
+	{
+		m_gameClock->Dilate( 1.0f );
 	}
 
 
 	BeginFrame();
-	Update( deltaTime );
+	Update( (float) m_gameClock->GetFrameTime() );
 	Render();
 	EndFrame();
 }
@@ -136,10 +133,10 @@ bool App::HandleKeyPressed( unsigned char keyCode )
 		
 		break;
 	case 'P':
-		if(m_isPaused)
-			m_isPaused = false;
+		if( m_gameClock->IsPaused() )
+			m_gameClock->Resume();
 		else
-			m_isPaused = true;
+			m_gameClock->Pause();
 		return true;
 		break;
 	case 'T':

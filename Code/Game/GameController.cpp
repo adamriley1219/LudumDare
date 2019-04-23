@@ -31,11 +31,6 @@ GameController::~GameController()
 */
 void GameController::Update( float deltaSec )
 {
-	A_Key.UpdateStatus( GetKeyState( KEY_A ) & 0XF0 );
-	S_Key.UpdateStatus( GetKeyState( KEY_S ) & 0XF0 );
-	D_Key.UpdateStatus( GetKeyState( KEY_D ) & 0XF0 );
-	W_Key.UpdateStatus( GetKeyState( KEY_W ) & 0XF0 );
-	
 	Shift_Button.UpdateStatus( g_theInputSystem->IsShiftPressed() );
 
 	if( Shift_Button.WasJustPressed() )
@@ -87,10 +82,10 @@ void GameController::Update( float deltaSec )
 Vec2 GameController::GetFramePan() const
 {
 	Vec2 ret = Vec2::ZERO;
-	ret += Vec2( A_Key.IsPressed() ? -1.0f : 0.0f, 0.0f );
-	ret += Vec2( D_Key.IsPressed() ? 1.0f : 0.0f, 0.0f );
-	ret += Vec2( 0.0f, S_Key.IsPressed() ? -1.0f : 0.0f );
-	ret += Vec2( 0.0f, W_Key.IsPressed() ? 1.0f : 0.0f );
+	ret += Vec2( g_theInputSystem->KeyIsDown( KEY_A ) ? -1.0f : 0.0f, 0.0f );
+	ret += Vec2( g_theInputSystem->KeyIsDown( KEY_D ) ? 1.0f : 0.0f, 0.0f );
+	ret += Vec2( 0.0f, g_theInputSystem->KeyIsDown( KEY_S ) ? -1.0f : 0.0f );
+	ret += Vec2( 0.0f, g_theInputSystem->KeyIsDown( KEY_W ) ? 1.0f : 0.0f );
 
 	IntVec2 pos = g_theWindowContext->GetClientMousePosition();
 	AABB2 screen = g_theWindowContext->GetClientScreen();

@@ -15,7 +15,8 @@
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/App.hpp"
-#include "Engine/Core/Time.hpp"
+#include "Engine/Core/Time/Time.hpp"
+#include "Engine/Core/Time/StopWatch.hpp"
 #include "Engine/Core/MeshCPU.hpp"
 #include "Engine/Renderer/MeshGPU.hpp"
 #include "Engine/Core/WindowContext.hpp"
@@ -24,6 +25,7 @@
 #include "Game/Map.hpp"
 #include "Game/GameController.hpp"
 #include "Engine/Renderer/Model.hpp"
+
 #include <vector>
 
 #include <Math.h>
@@ -59,15 +61,13 @@ void Game::Startup()
 	EventArgs args;
 	g_theDebugRenderSystem->Command_Open( args );
 
-	g_theRenderer->SetAmbientLight( Rgba::WHITE, m_curAmbiant );
-	g_theRenderer->SetSpecFactor( m_specFact );
-	g_theRenderer->SetSpecPower( m_specPow );
-
 	// Setup UI Camera
 	m_UICamera.SetOrthographicProjection( Vec2( -SCREEN_HALF_WIDTH, -SCREEN_HALF_HEIGHT ), Vec2( SCREEN_HALF_WIDTH,  SCREEN_HALF_HEIGHT ) );
 	m_UICamera.SetModelMatrix( Matrix44::IDENTITY );
 
 	m_curCamera = &m_UICamera;
+
+	stopwatch = new StopWatch( g_theApp->m_gameClock );
 }
 
 //--------------------------------------------------------------------------
@@ -78,6 +78,7 @@ void Game::Shutdown()
 {
 	SAFE_DELETE(m_mainMenuRadGroup);
 	SAFE_DELETE(m_editorRadGroup);
+	SAFE_DELETE(stopwatch);
 	for( Map* map : m_maps )
 	{
 		delete map;
@@ -183,6 +184,17 @@ void Game::UpdateGame( float deltaSeconds )
 	default:
 		ERROR_AND_DIE("UNKNOWN STATE IN Game::UpdateGame");
 		break;
+	}
+
+	if( g_theInputSystem->KeyWasPressed( KEY_B ) )
+	{
+		stopwatch->SetAndReset( 5.0f );
+	}
+
+	if( stopwatch->HasElapsed() )
+	{
+		DebugRenderMessage( 2.0f, Rgba::WHITE, Rgba::WHITE, "stopwatch elapsed" );
+		stopwatch->Decrement();
 	}
 
 	float screenHeight = g_theDebugRenderSystem->GetScreenHeight() * .5f;

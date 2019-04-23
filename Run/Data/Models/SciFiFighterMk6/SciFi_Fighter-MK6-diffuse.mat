@@ -1,0 +1,9 @@
+<material id="SciFiFighterMk6/SciFiFighterMk6"
+  shader="Data/Shaders/default_lit.xml">
+
+  <diffuse  src="Data/Models/SciFiFighterMk6/SciFi_Fighter-MK6-diffuse.jpg" />
+  <normal   src="Data/Models/SciFiFighterMk6/SciFi_Fighter-MK6-diffuse.jpg" />
+
+  <sampler idx="0" type="linear" />
+
+</material>

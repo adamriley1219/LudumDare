@@ -9,6 +9,7 @@ class Shader;
 class MeshGPU;
 class Material;
 class Map;
+class StopWatch;
 
 
 
@@ -78,7 +79,8 @@ private:
 
 private:
 	Shader* m_shader = nullptr;
-	
+	StopWatch* stopwatch = nullptr;
+
 	// Camera
 	Camera* m_curCamera;
 	mutable Camera m_UICamera;

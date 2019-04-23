@@ -3,7 +3,7 @@
 #include <math.h>
 #include <cassert>
 #include <crtdbg.h>
-#include "Engine/Core/Time.hpp"
+#include "Engine/Core/Time/Time.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/DevConsole.hpp"
@@ -117,7 +117,7 @@ static bool AppWindowProc( void* windowHandle, uint32_t wmMessageCode, uintptr_t
 	case WM_MOUSEWHEEL:
 	{
 		short zDelta = HIWORD( wParam );
-		g_theGameController->WheelMovement( (float) zDelta / 120 );
+		g_theGameController->WheelMovement( (float) zDelta / 120.0f );
 		break;
 	}
 	}
@@ -156,9 +156,11 @@ void RunFrame()
 {
 	RunMessagePump();
 
-	g_theApp->RunFrame( (float) GetCurrentTimeSeconds() );	
+	g_theApp->RunFrame();	
 
 }
+
+
 //-----------------------------------------------------------------------------------------------
 void Startup()
 {
