@@ -25,6 +25,7 @@
 #include "Game/Map.hpp"
 #include "Game/GameController.hpp"
 #include "Engine/Renderer/Model.hpp"
+#include "Engine/Renderer/Shaders/UniformBuffer.hpp"
 
 #include <vector>
 
@@ -235,6 +236,14 @@ void Game::GameRender() const
 		ERROR_AND_DIE("UNKNOWN STATE IN Game::GameRender");
 		break;
 	}
+
+	effectstruct grayscaleValue;
+	grayscaleValue.TONEMAP_STRENGTH = ( SinDegrees( m_gameTime * 80.0f ) + 1.0f ) * .5f;
+	Material* mat = g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/grayscale.mat" );
+	mat->SetUniforms( &grayscaleValue, sizeof( grayscaleValue ) );
+	g_theRenderer->ApplyEffect( g_theRenderer->GetScratchColorTargetView(), g_theRenderer->GetRenderTargetTextureView(), mat );
+	g_theRenderer->CopyTexture( g_theRenderer->GetBufferTexture(), g_theRenderer->GetScratchBuffer() );
+
 
 	g_theRenderer->EndCamera();
 	g_theDebugRenderSystem->RenderToCamera( g_theGame->GetCurrentCamera() );

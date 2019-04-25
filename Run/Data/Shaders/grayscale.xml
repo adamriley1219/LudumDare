@@ -1,0 +1,23 @@
+
+
+
+
+
+<shader id="tonemap">
+
+  <pass src="Data/Shaders/grayscale.hlsl"
+       defines="DEFINE=VALUE;JUST_DEFINED;ETC" >
+    <vert entry="VertexFunction" />
+    <frag entry="FragmentFunction" />
+    <depth
+         write="true"
+         test="lequal" />
+    <blend
+         mode="alpha" />
+    <raster
+         cull="back"
+         clockwise="false"
+         wireframe="false" />
+  </pass>
+
+</shader>

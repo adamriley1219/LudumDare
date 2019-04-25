@@ -1,6 +1,6 @@
 <mesh id="miku">
 	<submesh src="SnowHatsuneMiku/ROOMITEMS011_ALL.obj"
-		material="Data/Models/SciFiFighterMk6/SciFi_Fighter-MK6-diffuse.mat" 
+		material="Data/Models/SnowHatsuneMiku/roomitems_s011.mat" 
 		invert="false"
 		tangents="true"
 		scale=".5f"

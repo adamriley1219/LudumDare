@@ -3,6 +3,8 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Game/UIWidget.hpp"
+#include "Engine/Math/Matrix44.hpp"
+#include "Engine/Math/Vec3.hpp"
 
 
 class Shader;
@@ -10,7 +12,13 @@ class MeshGPU;
 class Material;
 class Map;
 class StopWatch;
+class UniformBuffer;
 
+struct effectstruct
+{
+	float TONEMAP_STRENGTH = .5f; 
+	Vec3 tonemap_pad00;
+};
 
 
 class Game

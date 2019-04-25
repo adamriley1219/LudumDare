@@ -1,0 +1,7 @@
+
+
+
+
+<material id="defaultUnlit"
+  shader="Data/Shaders/grayscale.xml"> 
+</material>
