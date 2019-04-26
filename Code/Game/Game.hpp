@@ -14,12 +14,18 @@ class Map;
 class StopWatch;
 class UniformBuffer;
 
-struct effectstruct
+struct singleEffect
 {
-	float TONEMAP_STRENGTH = .5f; 
+	float STRENGTH = .5f; 
 	Vec3 tonemap_pad00;
 };
 
+struct matrixEffect
+{
+	Matrix44 mat = Matrix44::IDENTITY;
+	float STRENGTH = .5f; 
+	Vec3 tonemap_pad00;
+};
 
 class Game
 {
@@ -47,17 +53,20 @@ private:
 	void RenderLoading() const;
 	void RenderMainMenu() const;
 	void RenderEditor() const;
+	void RenderPauseMenu() const;
 
 	// UI Setup
 	void SetupMainMenuUI();
 	void SetupEditorUI();
+	void SetUpPauseMenu();
 
 	//Update
 	void UpdateCamera( float deltaSeconds );
-	void UpdateMainMenu( float deltaSeconds ); 
+	void UpdateMainMenu(); 
 	void UpdateMap( float deltaSec, unsigned int  index );
 	void UpdateEditor( float deltaSec );
 	void UpdateEditorUI( float deltaSec );
+	void UpdatePauseMenu();
 
 	void LMouseDown();
 	void LMouseUp();
@@ -71,7 +80,15 @@ private:
 	static bool LoadToLevel( EventArgs& args );
 
 private:
+	void UpdateStates();
 	void SwitchStates( eGameStates state );
+
+public:
+	bool FadeIn();
+	bool FadeOut();
+
+private:
+	void RenderFade() const;
 
 private:
 	// Getters
@@ -79,15 +96,18 @@ private:
 
 private:
 	eGameStates m_state = GAMESTATE_INIT;
+	eGameStates m_switchToState = m_state;
 	unsigned int  m_curMapIdx = 1;
 	std::vector<Map*> m_maps;
 
 private:
-	unsigned int m_loadingFramCount = 0;
+	unsigned int m_stateFrameCount = 0;
 
 private:
 	Shader* m_shader = nullptr;
-	StopWatch* stopwatch = nullptr;
+	StopWatch* m_fadeinStopwatch = nullptr;
+	StopWatch* m_fadeoutStopwatch = nullptr;
+
 
 	// Camera
 	Camera* m_curCamera;
@@ -99,6 +119,8 @@ private:
 	UIRadioGroup* m_mainMenuRadGroup = nullptr;
 	UICanvas m_editorCanvis;
 	UIRadioGroup* m_editorRadGroup = nullptr;
+	UICanvas m_pauseMenuCanvis;
+	UIRadioGroup* m_pauseMenuRadGroup = nullptr;
 
 	// Lighting
 	float m_curAmbiant = 0.7f;

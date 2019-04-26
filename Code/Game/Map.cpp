@@ -44,8 +44,12 @@ Map::~Map()
 bool Map::Load( char const *filename )
 {
 	UNUSED(filename);
-	m_hasLoaded = true;
+	Model model( g_theRenderer, "building/towncenter" );
+	Model model2( g_theRenderer, "test/test" );
+	Model model3( g_theRenderer, "SciFiFighterMk6/SciFi_Fighter-MK6-spec" );
+
 	m_camera->SetFocalPoint( Vec3( 32.0f, 32.0f, 0.0f ) );
+	m_hasLoaded = true;
 	return Create( 64, 64 );
 }
 
@@ -69,7 +73,6 @@ void Map::Update( float deltaSec )
 {
 	UpdateCamera( deltaSec );
  	Vec3 mousePos = g_theGameController->GetWorldMousePos();
- 	//DebugRenderPoint( 0.0f, DEBUG_RENDER_USE_DEPTH, mousePos, Rgba::BLUE, Rgba::BLUE, 0.01f );
  	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, "Mouse World Pos: %f, %f, %f", mousePos.x, mousePos.y, mousePos.z );
 }
 
@@ -92,6 +95,7 @@ void Map::Render() const
 	g_theRenderer->DrawModel( &model );
 	g_theRenderer->DrawModel( &model2 );
 	g_theRenderer->DrawModel( &model3 );
+
 }
 
 //--------------------------------------------------------------------------

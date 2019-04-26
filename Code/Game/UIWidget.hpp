@@ -147,7 +147,7 @@ public:
 	std::string m_texturePath = "";
 
 
-	std::string m_eventOnClick = "play map=level0.map";
+	std::string m_eventOnClick = "UNMAPPED_EVENT";
 
 	eButtonSelectState m_state = BUTTON_STATE_NUTRAL;
 

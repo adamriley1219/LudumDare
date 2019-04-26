@@ -4,7 +4,7 @@
 //--------------------------------------------------------------------------------------
 cbuffer grayAmount : register(b8)
 {
-	float GRAY_STRENGTH; 
+	float FADE_STRENGTH; 
 	float3 pad00;
 };
 
@@ -62,8 +62,7 @@ v2f_t VertexFunction(vs_input_t input)
 float4 FragmentFunction( v2f_t input ) : SV_Target0
 {
 	float4 color = tDiffuse.Sample( sLinear, input.uv ); 
-	float gray = ( color.x + color.y + color.z ) * .33f;
-	float4 final_color = float4( gray, gray, gray, color.w ); 
+	float4 final_color = float4( color.x * .0f, color.y * .0f, color.z * .0f, color.w ); 
 
-	return lerp( color, final_color, GRAY_STRENGTH ); 
+	return lerp( color, final_color, FADE_STRENGTH ); 
 }

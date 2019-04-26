@@ -47,6 +47,7 @@ void App::Startup()
 
 	ClockSystemStartup();
 	m_gameClock = new Clock( &Clock::Master );
+	m_UIClock = new Clock( &Clock::Master );
 
 	g_theEventSystem->Startup();
 	g_theRenderer->Startup();
@@ -72,6 +73,7 @@ void App::Shutdown()
 	g_theEventSystem->Shutdown();
 
 	SAFE_DELETE( m_gameClock );
+	SAFE_DELETE( m_UIClock );
 
 	delete g_theGameController;
 	g_theGameController = nullptr;
@@ -115,6 +117,33 @@ void App::RunFrame()
 	Update( (float) m_gameClock->GetFrameTime() );
 	Render();
 	EndFrame();
+}
+
+//--------------------------------------------------------------------------
+/**
+* IsPaused
+*/
+bool App::IsPaused() const
+{
+	return m_gameClock->IsPaused(); 
+}
+
+//--------------------------------------------------------------------------
+/**
+* Unpause
+*/
+void App::Unpause()
+{
+	m_gameClock->Resume();
+}
+
+//--------------------------------------------------------------------------
+/**
+* Pause
+*/
+void App::Pause()
+{
+	m_UIClock->Pause();
 }
 
 //--------------------------------------------------------------------------
@@ -226,11 +255,26 @@ bool App::QuitEvent( EventArgs& args )
 
 //--------------------------------------------------------------------------
 /**
-* HandleKeyPressedTogglePause
+* UnpauseEvent
 */
-void App::TogglePause()
+bool App::UnpauseEvent( EventArgs& args )
 {
-	m_isPaused = !m_isPaused;
+	UNUSED( args );
+	g_theApp->Unpause();
+	Event event("unselect_all");
+	g_theGame->m_pauseMenuCanvis.ProcessInput( event );
+	return true;
+}
+
+//--------------------------------------------------------------------------
+/**
+* PauseEvent
+*/
+bool App::PauseEvent( EventArgs& args )
+{
+	UNUSED( args );
+	g_theApp->Pause();
+	return true;
 }
 
 //--------------------------------------------------------------------------
@@ -305,5 +349,7 @@ void App::EndFrame()
 void App::RegisterEvents()
 {
 	g_theEventSystem->SubscribeEventCallbackFunction( "quit", QuitEvent );
+	g_theEventSystem->SubscribeEventCallbackFunction( "pause", PauseEvent );
+	g_theEventSystem->SubscribeEventCallbackFunction( "unpause", UnpauseEvent );
 }
 

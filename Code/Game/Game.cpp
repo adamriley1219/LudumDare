@@ -26,6 +26,7 @@
 #include "Game/GameController.hpp"
 #include "Engine/Renderer/Model.hpp"
 #include "Engine/Renderer/Shaders/UniformBuffer.hpp"
+#include "Engine/Core/Time/Clock.hpp"
 
 #include <vector>
 
@@ -54,9 +55,6 @@ Game::~Game()
 */
 void Game::Startup()
 {
-	m_shader = g_theRenderer->CreateOrGetShaderFromXML( "Data/Shaders/default_lit.xml" );
-	g_theRenderer->BindShader( m_shader );
-	
 	g_theWindowContext->LockMouse();
 
 	EventArgs args;
@@ -66,9 +64,13 @@ void Game::Startup()
 	m_UICamera.SetOrthographicProjection( Vec2( -SCREEN_HALF_WIDTH, -SCREEN_HALF_HEIGHT ), Vec2( SCREEN_HALF_WIDTH,  SCREEN_HALF_HEIGHT ) );
 	m_UICamera.SetModelMatrix( Matrix44::IDENTITY );
 
+	m_DevColsoleCamera.SetOrthographicProjection( Vec2( -100.0f, -50.0f ), Vec2( 100.0f,  50.0f ) );
+	m_DevColsoleCamera.SetModelMatrix( Matrix44::IDENTITY );
+
 	m_curCamera = &m_UICamera;
 
-	stopwatch = new StopWatch( g_theApp->m_gameClock );
+	m_fadeinStopwatch = new StopWatch( g_theApp->m_UIClock );
+	m_fadeoutStopwatch = new StopWatch( g_theApp->m_UIClock );
 }
 
 //--------------------------------------------------------------------------
@@ -79,7 +81,9 @@ void Game::Shutdown()
 {
 	SAFE_DELETE(m_mainMenuRadGroup);
 	SAFE_DELETE(m_editorRadGroup);
-	SAFE_DELETE(stopwatch);
+	SAFE_DELETE(m_pauseMenuRadGroup);
+	SAFE_DELETE(m_fadeinStopwatch);
+	SAFE_DELETE(m_fadeoutStopwatch);
 	for( Map* map : m_maps )
 	{
 		delete map;
@@ -152,6 +156,8 @@ bool Game::HandleQuitRequest()
 	{
 		SwitchStates( GAMESTATE_MAINMENU );
 		Event event("unselect_all");
+		m_pauseMenuCanvis.ProcessInput( event );
+		m_editorCanvis.ProcessInput( event );
 		m_mainMenuCanvis.ProcessInput( event );
 		return true;
 	}
@@ -164,38 +170,37 @@ bool Game::HandleQuitRequest()
 */
 void Game::UpdateGame( float deltaSeconds )
 {
+	UpdateStates();
 	m_gameTime += deltaSeconds;
+	++m_stateFrameCount;
 	switch( m_state )
 	{
 	case GAMESTATE_INIT:
 		InisializeGame();
 		break;
 	case GAMESTATE_MAINMENU:
-		UpdateMainMenu( deltaSeconds );
+		UpdateMainMenu();
 		break;
 	case GAMESTATE_LOADING:
 		LoadLevel( m_curMapIdx );
 		break;
 	case GAMESTATE_GAMEPLAY:
+		if( g_theApp->IsPaused() )
+		{
+			UpdatePauseMenu();
+		}
 		UpdateMap( deltaSeconds, m_curMapIdx );
 		break;
 	case GAMESTATE_EDITOR:
+		if( g_theApp->IsPaused() )
+		{
+			UpdatePauseMenu();
+		}
 		UpdateEditor( deltaSeconds ); 
 		break;
 	default:
 		ERROR_AND_DIE("UNKNOWN STATE IN Game::UpdateGame");
 		break;
-	}
-
-	if( g_theInputSystem->KeyWasPressed( KEY_B ) )
-	{
-		stopwatch->SetAndReset( 5.0f );
-	}
-
-	if( stopwatch->HasElapsed() )
-	{
-		DebugRenderMessage( 2.0f, Rgba::WHITE, Rgba::WHITE, "stopwatch elapsed" );
-		stopwatch->Decrement();
 	}
 
 	float screenHeight = g_theDebugRenderSystem->GetScreenHeight() * .5f;
@@ -237,15 +242,15 @@ void Game::GameRender() const
 		break;
 	}
 
-	effectstruct grayscaleValue;
-	grayscaleValue.TONEMAP_STRENGTH = ( SinDegrees( m_gameTime * 80.0f ) + 1.0f ) * .5f;
-	Material* mat = g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/grayscale.mat" );
-	mat->SetUniforms( &grayscaleValue, sizeof( grayscaleValue ) );
-	g_theRenderer->ApplyEffect( g_theRenderer->GetScratchColorTargetView(), g_theRenderer->GetRenderTargetTextureView(), mat );
-	g_theRenderer->CopyTexture( g_theRenderer->GetBufferTexture(), g_theRenderer->GetScratchBuffer() );
-
-
 	g_theRenderer->EndCamera();
+
+	if( g_theApp->IsPaused() && ( GAMESTATE_GAMEPLAY == m_state || GAMESTATE_EDITOR == m_state ) )
+	{
+		RenderPauseMenu();
+	}
+
+	RenderFade();
+
 	g_theDebugRenderSystem->RenderToCamera( g_theGame->GetCurrentCamera() );
 }
 
@@ -256,7 +261,7 @@ void Game::GameRender() const
 void Game::RenderMap( unsigned int index ) const
 {
 	ASSERT_OR_DIE( index < m_maps.size(), Stringf( "Invalid index of: %u into the maps.", index ) );
-	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_lit.mat" ) );
+	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
 	m_maps[index]->Render();
 }
 
@@ -266,8 +271,26 @@ void Game::RenderMap( unsigned int index ) const
 */
 void Game::RenderLoadingScreen() const
 {
-	g_theRenderer->ClearScreen( Rgba::LIGHT_BLUE );
-	DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_CENTERED, 10.0f, Rgba::WHITE, Rgba::WHITE, "Loading..." );
+	g_theRenderer->ClearScreen( Rgba::BLUE );
+
+
+	UICanvas canvas;
+
+	canvas.m_pivot = Vec2::ALIGN_CENTERED;
+	canvas.m_virtualSize = Vec4( 1.0f, 1.0f, 0.f, 0.f );
+	canvas.m_fillColor = Rgba::BLACK;
+	canvas.m_boarderColor = Rgba::GRAY;
+	canvas.m_boarderThickness = 1.0f;
+
+	UILabel* textchild = canvas.CreateChild<UILabel>();
+	textchild->m_pivot = Vec2::ALIGN_CENTERED;
+	textchild->m_virtualPosition = Vec4( 0.5f, 0.5f, 0.0f, 0.0f );
+	textchild->m_virtualSize = Vec4( .40f, .40f, 0.0f, 0.0f );
+	textchild->m_text = "Loading";
+	textchild->m_color = Rgba::WHITE;
+
+	canvas.UpdateBounds( AABB2( SCREEN_WIDTH, SCREEN_HEIGHT ) );
+	canvas.Render();
 }
 
 
@@ -278,7 +301,6 @@ void Game::RenderLoadingScreen() const
 void Game::RenderInit() const
 {
 	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
-	DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "INIT" );
 	RenderLoadingScreen();
 }
 
@@ -289,7 +311,6 @@ void Game::RenderInit() const
 void Game::RenderLoading() const
 {
 	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
-	DebugRenderScreenTextf( 0.0f, Vec2::ALIGN_BOTTOM, 10.0f, Rgba::WHITE, Rgba::WHITE, "GameLoding" );
 	RenderLoadingScreen();
 }
 
@@ -324,6 +345,26 @@ void Game::RenderEditor() const
 
 //--------------------------------------------------------------------------
 /**
+* RenderPauseMenu
+*/
+void Game::RenderPauseMenu() const
+{
+	singleEffect matVals;
+	matVals.STRENGTH = 1.0f;
+	Material* mat = g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/grayscale.mat" );
+	mat->SetUniforms( &matVals, sizeof( matVals ) );
+	g_theRenderer->ApplyEffect( g_theRenderer->GetScratchColorTargetView(), g_theRenderer->GetRenderTargetTextureView(), mat );
+	g_theRenderer->CopyTexture( g_theRenderer->GetBufferTexture(), g_theRenderer->GetScratchBuffer() );
+
+	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
+	m_UICamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
+	m_UICamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
+	g_theRenderer->BeginCamera( &m_UICamera );
+	m_pauseMenuCanvis.Render();
+}
+
+//--------------------------------------------------------------------------
+/**
 * SetupMainMenuUI
 */
 void Game::SetupMainMenuUI()
@@ -332,8 +373,8 @@ void Game::SetupMainMenuUI()
 
 	m_mainMenuCanvis.m_pivot = Vec2::ALIGN_CENTERED;
 	m_mainMenuCanvis.m_virtualSize = Vec4( 1.0f, 1.0f, 0.f, 0.f );
-	m_mainMenuCanvis.m_fillColor = Rgba( 0.2f, .7f, 0.1f );
-	m_mainMenuCanvis.m_boarderColor = Rgba::DARK_GREEN;
+	m_mainMenuCanvis.m_fillColor = Rgba( 0.3f, .3f, 0.4f );
+	m_mainMenuCanvis.m_boarderColor = Rgba::LIGHT_BLUE;
 	m_mainMenuCanvis.m_boarderThickness = ( SinDegrees( m_gameTime * 90.f ) + 2.0f ) * .5f;
 
 	UILabel* textchild = m_mainMenuCanvis.CreateChild<UILabel>();
@@ -341,7 +382,7 @@ void Game::SetupMainMenuUI()
 	textchild->m_virtualPosition = Vec4( .5f, .9f, 0, 0 );
 	textchild->m_virtualSize = Vec4( .40f, .40f, 0.0f, 0.0f );
 	textchild->m_text = "--RTS TITLE--";
-	textchild->m_color = Rgba::BLACK;
+	textchild->m_color = Rgba::LIGHT_RED;
 
 	UIButton* button = m_mainMenuCanvis.CreateChild<UIButton>();
 	button->m_pivot = Vec2::ALIGN_CENTER_LEFT;
@@ -395,7 +436,7 @@ void Game::SetupEditorUI()
 	m_editorCanvis.m_boarderColor = Rgba::FADED_GRAY;
 	m_editorCanvis.m_boarderThickness = .01f;
 	
-	float size = 10;
+	float size = 10.0f;
 
 	UIButton* button = m_editorCanvis.CreateChild<UIButton>();
 	button->m_pivot = Vec2::ALIGN_CENTERED;
@@ -406,6 +447,7 @@ void Game::SetupEditorUI()
 	button->m_selectedColor = Rgba::BLUE;
 	button->m_useText = false;
 	button->m_texturePath = "Data/Images/Terrain/Dirt_DIFFU.png";
+	button->m_eventOnClick = "select";
 	button->SetRadioGroup( m_editorRadGroup );
 
 	button = m_editorCanvis.CreateChild<UIButton>();
@@ -417,6 +459,7 @@ void Game::SetupEditorUI()
 	button->m_selectedColor = Rgba::BLUE;
 	button->m_useText = false;
 	button->m_texturePath = "Data/Images/Terrain/Dirt_Stone_DIFFU.png";
+	button->m_eventOnClick = "select";
 	button->SetRadioGroup( m_editorRadGroup );
 
 	button = m_editorCanvis.CreateChild<UIButton>();
@@ -428,6 +471,7 @@ void Game::SetupEditorUI()
 	button->m_selectedColor = Rgba::BLUE;
 	button->m_useText = false;
 	button->m_texturePath = "Data/Images/Terrain/Grass_DIFFU.png";
+	button->m_eventOnClick = "select";
 	button->SetRadioGroup( m_editorRadGroup );
 
 	button = m_editorCanvis.CreateChild<UIButton>();
@@ -439,6 +483,7 @@ void Game::SetupEditorUI()
 	button->m_selectedColor = Rgba::BLUE;
 	button->m_useText = false;
 	button->m_texturePath = "Data/Images/Terrain/GrassRubble_DIFFU.png";
+	button->m_eventOnClick = "select";
 	button->SetRadioGroup( m_editorRadGroup );
 
 	button = m_editorCanvis.CreateChild<UIButton>();
@@ -450,10 +495,59 @@ void Game::SetupEditorUI()
 	button->m_selectedColor = Rgba::BLUE;
 	button->m_useText = false;
 	button->m_texturePath = "Data/Images/Terrain/Stone_DIFFU1.png";
+	button->m_eventOnClick = "select";
 	button->SetRadioGroup( m_editorRadGroup );
 
 }
 
+
+//--------------------------------------------------------------------------
+/**
+* SetUpPauseMenu
+*/
+void Game::SetUpPauseMenu()
+{
+	m_pauseMenuRadGroup = new UIRadioGroup();
+
+	m_pauseMenuCanvis.m_pivot = Vec2::ALIGN_CENTERED;
+	m_pauseMenuCanvis.m_virtualSize = Vec4( .0f, .0f, 70.f, 80.f );
+	m_pauseMenuCanvis.m_virtualPosition = Vec4( .5f, .5f, 0.0f, 0.0f );
+	m_pauseMenuCanvis.m_fillColor = Rgba( 0.3f, .3f, 0.4f );
+	m_pauseMenuCanvis.m_boarderColor = Rgba::LIGHT_BLUE;
+	m_pauseMenuCanvis.m_boarderThickness = .01f;
+
+	UILabel* textchild = m_pauseMenuCanvis.CreateChild<UILabel>();
+	textchild->m_pivot = Vec2::ALIGN_CENTERED;
+	textchild->m_virtualPosition = Vec4( .5f, .9f, 0, 0 );
+	textchild->m_virtualSize = Vec4( .40f, .40f, 0.0f, 0.0f );
+	textchild->m_text = "PAUSED";
+	textchild->m_color = Rgba::LIGHT_RED;
+
+	UIButton* button = m_pauseMenuCanvis.CreateChild<UIButton>();
+	button->m_pivot = Vec2::ALIGN_CENTERED;
+	button->m_virtualPosition = Vec4( .5f, .6f, 0, 0 );
+	button->m_virtualSize = Vec4( .0f, .0f, 25.f, 10.0f );
+	button->m_hoveredColor = Rgba::YELLOW;
+	button->m_nutralColor = Rgba::WHITE;
+	button->m_selectedColor = Rgba::BLUE;
+	button->m_useText = true;
+	button->m_text = "Resume";
+	button->m_eventOnClick = "unpause";
+	button->SetRadioGroup( m_pauseMenuRadGroup );
+
+	button = m_pauseMenuCanvis.CreateChild<UIButton>();
+	button->m_pivot = Vec2::ALIGN_CENTERED;
+	button->m_virtualPosition = Vec4( .5f, .4f, 0, 0 );
+	button->m_virtualSize = Vec4( .0f, .0f, 25.f, 10.0f );
+	button->m_hoveredColor = Rgba::YELLOW;
+	button->m_nutralColor = Rgba::WHITE;
+	button->m_selectedColor = Rgba::BLUE;
+	button->m_useText = true;
+	button->m_text = "Quit";
+	button->m_eventOnClick = "quit";
+	button->SetRadioGroup( m_pauseMenuRadGroup );
+
+}
 
 //--------------------------------------------------------------------------
 /**
@@ -495,9 +589,12 @@ void Game::UpdateCamera( float deltaSeconds )
 /**
 * UpdateMainMenu
 */
-void Game::UpdateMainMenu( float deltaSeconds )
+void Game::UpdateMainMenu()
 {
-	UNUSED(deltaSeconds);
+	if( m_stateFrameCount == 1 )
+	{
+		FadeIn();
+	}
 	m_mainMenuCanvis.m_boarderThickness = ( SinDegrees( m_gameTime * 90.f ) + 2.0f ) * .5f;
 	m_mainMenuCanvis.UpdateBounds( AABB2( SCREEN_WIDTH, SCREEN_HEIGHT ) );
 	Vec2 mousePos = g_theGameController->GetScreenMousePos();
@@ -511,6 +608,10 @@ void Game::UpdateMainMenu( float deltaSeconds )
 */
 void Game::UpdateMap( float deltaSec, unsigned int index )
 {
+	if( m_stateFrameCount == 1 )
+	{
+		FadeIn();
+	}
 	ASSERT_OR_DIE( index < m_maps.size() && index >= 0, Stringf( "Invalid index of: %u into the maps.", index ) );
 	m_maps[index]->Update( deltaSec );
 }
@@ -521,7 +622,14 @@ void Game::UpdateMap( float deltaSec, unsigned int index )
 */
 void Game::UpdateEditor( float deltaSec )
 {
-	UpdateEditorUI( deltaSec );
+	if( m_stateFrameCount == 1 )
+	{
+		FadeIn();
+	}
+	if( !g_theApp->IsPaused() )
+	{
+		UpdateEditorUI( deltaSec );
+	}
 
 	m_maps[0]->Update( deltaSec );
 }
@@ -539,6 +647,18 @@ void Game::UpdateEditorUI( float deltaSec )
 	Event event( Stringf("hover x=%f y=%f", mousePos.x, mousePos.y ) );
 	m_editorCanvis.ProcessInput( event );
 
+}
+
+//--------------------------------------------------------------------------
+/**
+* UpdatePauseMenu
+*/
+void Game::UpdatePauseMenu()
+{
+	m_pauseMenuCanvis.UpdateBounds( AABB2( SCREEN_WIDTH, SCREEN_HEIGHT ) );
+	Vec2 mousePos = g_theGameController->GetScreenMousePos();
+	Event event( Stringf("hover x=%f y=%f", mousePos.x, mousePos.y ) );
+	m_pauseMenuCanvis.ProcessInput( event );
 }
 
 //--------------------------------------------------------------------------
@@ -564,7 +684,25 @@ void Game::LMouseUp()
 	}
 	if( m_state == GAMESTATE_EDITOR )
 	{
-		m_editorCanvis.ProcessInput( event );
+		if( g_theApp->IsPaused() )
+		{
+			m_pauseMenuCanvis.ProcessInput( event );
+		}
+		else
+		{
+			m_editorCanvis.ProcessInput( event );
+		}
+	}
+	if( m_state == GAMESTATE_GAMEPLAY )
+	{
+		if( g_theApp->IsPaused() )
+		{
+			m_pauseMenuCanvis.ProcessInput( event );
+		}
+		else
+		{
+			// Game input
+		}
 	}
 }
 
@@ -599,15 +737,11 @@ void Game::InisializeGame()
 		SwitchStates( GAMESTATE_MAINMENU );
 		return;
 	}
-	++m_loadingFramCount;
-	if( m_loadingFramCount == 1 )
+
+	if( m_stateFrameCount == 1 )
 	{
 		return;
-	}
-	
-	m_DevColsoleCamera.SetOrthographicProjection( Vec2( -100.0f, -50.0f ), Vec2( 100.0f,  50.0f ) );
-	m_DevColsoleCamera.SetModelMatrix( Matrix44::IDENTITY );
-
+	}	
 
 	LightData light;
 	light.is_direction = 1.0f;
@@ -624,21 +758,20 @@ void Game::InisializeGame()
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "play", LoadToLevel );
 
-	
 	Map* editMap =  new Map( g_theRenderer );
-	editMap->Load( "UNUNSED RIGHT NOW" );
 	m_maps.push_back( editMap );
+	editMap->Load( "UNUSED_RIGHT_NOW" );
 	editMap =  new Map( g_theRenderer );
-	editMap->Load( "UNUNSED RIGHT NOW" );
 	m_maps.push_back( editMap );
+	editMap->Load( "UNUSED_RIGHT_NOW" );
 
-	SwitchStates( GAMESTATE_MAINMENU );
 	initGame = true;
-
-	//Model model( g_theRenderer, "building/towncenter");
 
 	SetupMainMenuUI();
 	SetupEditorUI();
+	SetUpPauseMenu();
+
+	SwitchStates( GAMESTATE_MAINMENU );
 }
 
 //--------------------------------------------------------------------------
@@ -647,22 +780,18 @@ void Game::InisializeGame()
 */
 void Game::LoadLevel( unsigned int index )
 {
-	++m_loadingFramCount;
-	if( m_loadingFramCount == 1 )
+	if( m_stateFrameCount == 1 )
 	{
 		return;
 	}
 	m_curMapIdx = index;
-	if( (unsigned int) m_maps.size() > index )
-	{
-		SwitchStates( m_curMapIdx == 0 ? GAMESTATE_EDITOR : GAMESTATE_GAMEPLAY );
-		return;
-	}
+	ASSERT_OR_DIE( (unsigned int) m_maps.size() > index, "Bad level index" );
+	
 	if( !m_maps[index]->IsLoaded() )
 	{
 		m_maps[index]->Load( "UNUSED RIGHT NOW" );
-		SwitchStates( m_curMapIdx == 0 ? GAMESTATE_EDITOR : GAMESTATE_GAMEPLAY );
 	}
+	SwitchStates( m_curMapIdx == 0 ? GAMESTATE_EDITOR : GAMESTATE_GAMEPLAY );
 }
 
 //--------------------------------------------------------------------------
@@ -679,13 +808,113 @@ bool Game::LoadToLevel( EventArgs& args )
 
 //--------------------------------------------------------------------------
 /**
+* UpdateStates
+*/
+void Game::UpdateStates()
+{
+	if( m_state != m_switchToState )
+	{
+		m_state = m_switchToState;
+		m_stateFrameCount = 0;
+
+		if( g_theApp->IsPaused() )
+		{
+			g_theApp->Unpause();
+		}
+	}
+}
+
+//--------------------------------------------------------------------------
+/**
 * SwitchStates
 */
 void Game::SwitchStates( eGameStates state )
 {
-	if( state == GAMESTATE_INIT || state == GAMESTATE_LOADING )
+	m_switchToState = state;
+}
+
+//--------------------------------------------------------------------------
+/**
+* FadeIn
+*/
+bool Game::FadeIn()
+{
+	m_fadeoutStopwatch->Stop();
+	if( m_fadeinStopwatch->IsStopped() )
 	{
-		m_loadingFramCount = 0;
+		m_fadeinStopwatch->SetAndReset( 1.0f );
 	}
-	m_state = state;
+
+	if( m_fadeinStopwatch->HasElapsed() )
+	{
+		m_fadeinStopwatch->Stop();
+		return true;
+	}
+	return false;
+}
+
+//--------------------------------------------------------------------------
+/**
+* FadeOut
+*/
+bool Game::FadeOut()
+{
+	if( !m_fadeinStopwatch->IsStopped() )
+	{
+		return false;
+	}
+	if( m_fadeoutStopwatch->IsStopped() )
+	{
+		m_fadeoutStopwatch->SetAndReset( 1.0f );
+	}
+	
+	if( m_fadeoutStopwatch->HasElapsed() )
+	{
+		m_fadeoutStopwatch->Stop();
+		return true;
+	}
+	return false;
+}
+
+//--------------------------------------------------------------------------
+/**
+* RenderFade
+*/
+void Game::RenderFade() const
+{
+	if( !m_fadeoutStopwatch->IsStopped() )
+	{
+		float fadeVal = Clamp( m_fadeoutStopwatch->GetNormalizedElapsedTime(), 0.0f, 1.0f );
+		matrixEffect matVals;
+		matVals.STRENGTH = fadeVal;
+		matVals.mat.m_values[Matrix44::Ix] = 0.0f;
+		matVals.mat.m_values[Matrix44::Jy] = 0.0f;
+		matVals.mat.m_values[Matrix44::Kz] = 0.0f;
+		Material* mat = g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/tonemap.mat" );
+		mat->SetUniforms( &matVals, sizeof( matVals ) );
+		g_theRenderer->ApplyEffect( g_theRenderer->GetScratchColorTargetView(), g_theRenderer->GetRenderTargetTextureView(), mat );
+		g_theRenderer->CopyTexture( g_theRenderer->GetBufferTexture(), g_theRenderer->GetScratchBuffer() );
+		if( m_fadeoutStopwatch->HasElapsed() )
+		{
+			m_fadeoutStopwatch->Stop();
+		}
+	}
+	if( !m_fadeinStopwatch->IsStopped() )
+	{
+		float fadeVal = Clamp( 1.0f - m_fadeinStopwatch->GetNormalizedElapsedTime(), 0.0f, 1.0f );
+		matrixEffect matVals;
+		matVals.STRENGTH = fadeVal;
+		matVals.mat.m_values[Matrix44::Ix] = 0.0f;
+		matVals.mat.m_values[Matrix44::Jy] = 0.0f;
+		matVals.mat.m_values[Matrix44::Kz] = 0.0f;
+		Material* mat = g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/tonemap.mat" );
+		mat->SetUniforms( &matVals, sizeof( matVals ) );
+		g_theRenderer->ApplyEffect( g_theRenderer->GetScratchColorTargetView(), g_theRenderer->GetRenderTargetTextureView(), mat );
+		g_theRenderer->CopyTexture( g_theRenderer->GetBufferTexture(), g_theRenderer->GetScratchBuffer() );
+		if( m_fadeinStopwatch->HasElapsed() )
+		{
+			m_fadeinStopwatch->Stop();
+		}
+	}
+	
 }

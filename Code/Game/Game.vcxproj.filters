@@ -133,6 +133,9 @@
     <Xml Include="..\..\Run\Data\Shaders\grayscale.xml">
       <Filter>Data\Shaders</Filter>
     </Xml>
+    <Xml Include="..\..\Run\Data\Shaders\fade.xml">
+      <Filter>Data\Shaders</Filter>
+    </Xml>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\..\Run\Data\Shaders\default_unlit.hlsl">
@@ -162,6 +165,9 @@
     <FxCompile Include="..\..\Run\Data\Shaders\grayscale.hlsl">
       <Filter>Data\Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\fade.hlsl">
+      <Filter>Data\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Run\Data\Materials\couch.mat">
@@ -177,6 +183,9 @@
       <Filter>Data\Materials</Filter>
     </None>
     <None Include="..\..\Run\Data\Materials\grayscale.mat">
+      <Filter>Data\Materials</Filter>
+    </None>
+    <None Include="..\..\Run\Data\Materials\fade.mat">
       <Filter>Data\Materials</Filter>
     </None>
   </ItemGroup>

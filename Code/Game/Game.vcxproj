@@ -219,6 +219,7 @@
     </Xml>
     <Xml Include="..\..\Run\Data\Shaders\devShader.xml" />
     <Xml Include="..\..\Run\Data\Shaders\dissolve.xml" />
+    <Xml Include="..\..\Run\Data\Shaders\fade.xml" />
     <Xml Include="..\..\Run\Data\Shaders\grayscale.xml" />
     <Xml Include="..\..\Run\Data\Shaders\greaterDrawShader.xml" />
     <Xml Include="..\..\Run\Data\Shaders\lequalWireframeShader.xml" />
@@ -266,6 +267,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
+    <FxCompile Include="..\..\Run\Data\Shaders\fade.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="..\..\Run\Data\Shaders\grayscale.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -295,6 +302,7 @@
     <None Include="..\..\Run\Data\Materials\couch.mat" />
     <None Include="..\..\Run\Data\Materials\default_lit.mat" />
     <None Include="..\..\Run\Data\Materials\default_unlit.mat" />
+    <None Include="..\..\Run\Data\Materials\fade.mat" />
     <None Include="..\..\Run\Data\Materials\grayscale.mat" />
     <None Include="..\..\Run\Data\Materials\tonemap.mat" />
   </ItemGroup>
