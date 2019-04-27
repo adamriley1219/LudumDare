@@ -1,0 +1,17 @@
+<map mapDims="10.000000,5.000000">
+    <shape>
+        <trans pos="36.213577,28.981579" scale="1.000000,1.000000" rot="-92.368004"/>
+        <collider radius="0.700000" extents="2.322503,0.000000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.000000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="37.426178,34.390308" scale="1.000000,1.000000" rot="-25.474970"/>
+        <collider radius="0.700000" extents="3.691376,0.000000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.000000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="28.353470,32.148304" scale="1.000000,1.000000" rot="-49.988674"/>
+        <collider radius="0.700000" extents="4.043432,0.000000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.000000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+</map>

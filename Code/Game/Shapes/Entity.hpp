@@ -15,19 +15,14 @@ public:
 	void DebugRenderPhysics() const;
 	virtual void Render() const;
 	virtual void Update( float deltaSeconds ) = 0;
-	bool IsOffScreen() const;
 
 	// Setters
 	void SetAcceleration( bool on );
-	void SetVelocity( Vec2 velocity );
 	void SetRotationDirection( int rotationDirection );
 	void SetRotation( float rotationDegrees ); 
 
 	// Getters
 	Vec2 GetForwardVector() const;
-	Vec2 GetPosition() const;
-	float GetPhysicsRadius() const;
-	float GetCosmeticRadius() const;
 	float GetRotationDegrees() const;
 	Rgba GetTint() const;
 
@@ -36,15 +31,6 @@ public:
 	float GetCollisionDamage(); 
 
 protected:
-	Vec2 m_velocity;
-	Vec2 m_position;
-
-	// Child should define before using.
-	float m_physicsRadius;
-	float m_cosmeticRadius;
-	float m_acceleration;	
-	float m_angularAcceleration;
-
 	// Preset
 	float m_orientationDegrees = 0.0f;
 	float m_angularVelocity = 0.0f;

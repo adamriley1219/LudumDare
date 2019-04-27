@@ -28,6 +28,9 @@
     <Filter Include="UI">
       <UniqueIdentifier>{2cac7a78-ffef-4a27-8297-5c652c38fa03}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Gameplay\Shapes">
+      <UniqueIdentifier>{19bfec1e-199f-4dec-8b8d-0605a71faa2f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp">
@@ -45,17 +48,26 @@
     <ClCompile Include="Map.cpp">
       <Filter>Gameplay\Maps</Filter>
     </ClCompile>
-    <ClCompile Include="RTSCamera.cpp">
-      <Filter>Gameplay\User</Filter>
-    </ClCompile>
-    <ClCompile Include="Entity.cpp">
-      <Filter>Gameplay</Filter>
-    </ClCompile>
     <ClCompile Include="GameController.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
     <ClCompile Include="UIWidget.cpp">
       <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Shapes\Entity.cpp">
+      <Filter>Gameplay\Shapes</Filter>
+    </ClCompile>
+    <ClCompile Include="Shapes\Pill.cpp">
+      <Filter>Gameplay\Shapes</Filter>
+    </ClCompile>
+    <ClCompile Include="Shapes\Shape.cpp">
+      <Filter>Gameplay\Shapes</Filter>
+    </ClCompile>
+    <ClCompile Include="Shapes\Cursor.cpp">
+      <Filter>Gameplay\Shapes</Filter>
+    </ClCompile>
+    <ClCompile Include="FollowCamera2D.cpp">
+      <Filter>Gameplay\User</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -77,17 +89,26 @@
     <ClInclude Include="Map.hpp">
       <Filter>Gameplay\Maps</Filter>
     </ClInclude>
-    <ClInclude Include="RTSCamera.hpp">
-      <Filter>Gameplay\User</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity.hpp">
-      <Filter>Gameplay</Filter>
-    </ClInclude>
     <ClInclude Include="GameController.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="UIWidget.hpp">
       <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Shapes\Entity.hpp">
+      <Filter>Gameplay\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Shapes\Pill.hpp">
+      <Filter>Gameplay\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Shapes\Shape.hpp">
+      <Filter>Gameplay\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Shapes\Cursor.hpp">
+      <Filter>Gameplay\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="FollowCamera2D.hpp">
+      <Filter>Gameplay\User</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

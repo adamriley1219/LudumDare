@@ -1,4 +1,4 @@
-#include "Game/Entity.hpp"
+#include "Game/Shapes/Entity.hpp"
 #include "Game/GameCommon.hpp"
 
 //--------------------------------------------------------------------------
@@ -7,8 +7,6 @@
 */
 Entity::Entity()
 {
-	m_position = Vec2( WORLD_CENTER_X, WORLD_CENTER_Y ); // start in middle of screen
-	m_velocity = Vec2( 0.0f, 0.0f );
 	m_tint = Rgba( 1.0f, 1.0f, 1.0f );
 }
 
@@ -51,7 +49,7 @@ bool Entity::IsGarbage() const
 
 //--------------------------------------------------------------------------
 /**
-* Render
+* PushTransformsToGame
 */
 void Entity::Render() const
 {
@@ -76,18 +74,6 @@ void Entity::DebugRenderPhysics() const
 
 }
 
-//--------------------------------------------------------------------------
-/**
-* isGarbageisOffScreen
-*/
-bool Entity::IsOffScreen() const
-{
-	// 0.0f represents the lower left corner of the sceen.
-	return 0.0f > m_position.x + GetCosmeticRadius()
-		|| 0.0f > m_position.y + GetCosmeticRadius()
-		|| WORLD_WIDTH < m_position.x - GetCosmeticRadius()
-		|| WORLD_HEIGHT < m_position.y - GetCosmeticRadius();
-}
 
 //--------------------------------------------------------------------------
 /**
@@ -109,14 +95,6 @@ void Entity::SetAcceleration( bool on )
 	m_isAccelerating = on;
 }
 
-//--------------------------------------------------------------------------
-/**
-* setVelocity
-*/
-void Entity::SetVelocity( Vec2 velocity )
-{
-	m_velocity = velocity;
-}
 
 //--------------------------------------------------------------------------
 /**
@@ -134,33 +112,6 @@ void Entity::SetRotationDirection( int rotationDirection )
 void Entity::SetRotation( float rotationDegrees )
 {
 	m_orientationDegrees = rotationDegrees;
-}
-
-//--------------------------------------------------------------------------
-/**
-* getVelocity
-*/
-Vec2 Entity::GetPosition() const
-{
-	return m_position;
-}
-
-//--------------------------------------------------------------------------
-/**
-* GetPhysicsRadius
-*/
-float Entity::GetPhysicsRadius() const
-{
-	return m_physicsRadius * m_uniformScale;
-}
-
-//--------------------------------------------------------------------------
-/**
-* GetCosmeticRadius
-*/
-float Entity::GetCosmeticRadius() const
-{
-	return m_cosmeticRadius * m_uniformScale;
 }
 
 //--------------------------------------------------------------------------

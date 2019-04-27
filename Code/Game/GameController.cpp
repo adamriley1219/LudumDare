@@ -3,7 +3,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/WindowContext.hpp"
 #include "Game/Game.hpp"
-#include "Game/RTSCamera.hpp"
+#include "Game/FollowCamera2D.hpp"
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -146,10 +146,8 @@ Vec2 GameController::GetScreenMousePos()
 Vec3 GameController::GetWorldMousePos()
 {
 	IntVec2 rawMouseMovement = g_theWindowContext->GetClientMousePosition();
-	Vec3 pos = Vec3( g_theGame->GetCurrentCamera()->GetModelMatrix().GetT() );
-	RTSCamera* cam = (RTSCamera*) g_theGame->GetCurrentCamera();
 
-	return g_theGame->m_curCamera->GetClientToWorld( rawMouseMovement, SinDegrees(-pos.z) / CosDegrees( cam->m_distance ) );
+	return g_theGame->m_curCamera->GetClientToWorld( rawMouseMovement );
 }
 
 //--------------------------------------------------------------------------
@@ -158,7 +156,7 @@ Vec3 GameController::GetWorldMousePos()
 */
 void GameController::LMousePress()
 {
-	g_theGame->LMouseUp();
+	g_theGame->LMouseDown();
 }
 
 //--------------------------------------------------------------------------
@@ -167,7 +165,7 @@ void GameController::LMousePress()
 */
 void GameController::RMousePress()
 {
-	g_theGame->LMouseDown();
+	g_theGame->RMouseDown();
 }
 
 //--------------------------------------------------------------------------
@@ -176,7 +174,7 @@ void GameController::RMousePress()
 */
 void GameController::LMouseRelease()
 {
-	g_theGame->RMouseDown();
+	g_theGame->LMouseUp();
 }
 
 //--------------------------------------------------------------------------

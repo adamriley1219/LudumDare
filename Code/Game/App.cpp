@@ -54,6 +54,7 @@ void App::Startup()
 	g_theDebugRenderSystem->Startup();
 	g_theConsole->Startup();
 	g_thePhysicsSystem->Startup();
+	g_thePhysicsSystem->SetGravity( Vec2::ZERO );
 	g_theGame->Startup();
 
 	RegisterEvents();
@@ -303,6 +304,7 @@ void App::Update( float deltaSeconds )
 {
 	g_theConsole->			Update();
 	g_theGameController->	Update( deltaSeconds );
+	g_thePhysicsSystem->	Update( deltaSeconds );
 	g_theGame->				UpdateGame( deltaSeconds );
 	g_theDebugRenderSystem->Update();
 }
@@ -324,6 +326,7 @@ void App::Render() const
 	{
 		g_theDebugRenderSystem->RenderToScreen();
 	}
+	
 }
 
 //--------------------------------------------------------------------------

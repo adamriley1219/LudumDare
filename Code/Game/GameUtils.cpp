@@ -3,18 +3,9 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/RNG.hpp"
 #include "Engine/Renderer/Camera.hpp"
-#include "Game/Entity.hpp"
+#include "Game/Shapes/Entity.hpp"
 #include "Game/App.hpp"
 
-
-//--------------------------------------------------------------------------
-/**
-* ResolveBulletVxAsteroidGetDistance
-*/
-float GetDistanceBetween( const Entity* entityA, const Entity* entiryB )
-{
-	return GetDistance( entityA->GetPosition(), entiryB->GetPosition() );
-}
 
 float GetRandomlyChosenFloat( float a, float b )
 {

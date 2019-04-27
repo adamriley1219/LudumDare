@@ -27,6 +27,12 @@
 #include "Engine/Renderer/Model.hpp"
 #include "Engine/Renderer/Shaders/UniformBuffer.hpp"
 #include "Engine/Core/Time/Clock.hpp"
+#include "Engine/Physics/Rigidbody2D.hpp"
+#include "Engine/Physics/DiscCollider2D.hpp"
+#include "Engine/Physics/Collision2D.hpp"
+#include "Game/Shapes/Shape.hpp"
+#include "Game/Shapes/Pill.hpp"
+#include "Game/Shapes/Cursor.hpp"
 
 #include <vector>
 
@@ -79,6 +85,7 @@ void Game::Startup()
 */
 void Game::Shutdown()
 {
+	SAFE_DELETE(m_cursor);
 	SAFE_DELETE(m_mainMenuRadGroup);
 	SAFE_DELETE(m_editorRadGroup);
 	SAFE_DELETE(m_pauseMenuRadGroup);
@@ -97,41 +104,147 @@ void Game::Shutdown()
 */
 bool Game::HandleKeyPressed( unsigned char keyCode )
 {
+	if( m_state == GAMESTATE_EDITOR )
+	{
+		switch( keyCode )
+		{
+		case 76: // L
+			m_curRadius += 0.05f;
+			if( m_curRadius > 4.0f )
+			{
+				m_curRadius = 4.0f;
+			}
+			break;
+		case 75: // K
+			m_curRadius -= 0.05f;
+			if( m_curRadius < 0.0f )
+			{
+				m_curRadius = 0.0f;
+			}
+			break;
+		case 74: // J
+			m_curThickness += 0.05f;
+			if( m_curThickness > 4.0f )
+			{
+				m_curThickness = 4.0f;
+			}
+			break;
+		case 72: // H
+			m_curThickness -= 0.05f;
+			if( m_curThickness < 0.0f )
+			{
+				m_curThickness = 0.0f;
+			}
+			break;
+		case 222: // '
+			m_spawnDynamic = !m_spawnDynamic;
+			break;
+		case 186: // ;
+			break;
+		case 86: // V
+			m_friction -= 0.01f;
+			if( m_friction < 0.0f )
+			{
+				m_friction = -0.0f;
+			}
+			break;
+		case 66: // 'B'
+			m_friction += 0.01f;
+			if( m_friction > 8.0f )
+			{
+				m_friction = 8.0f;
+			}
+			break;
 
-	//--------------------------------------------------------------------------
-	if( keyCode == 'L' )
-	{
-		m_curAmbiant += 0.01f;
-		m_curAmbiant = Clamp( m_curAmbiant, 0.0f, 1.0f );
-		g_theRenderer->SetAmbientLight( Rgba::WHITE, m_curAmbiant );
-	}
-	if( keyCode == 'K' )
-	{
-		m_curAmbiant -= 0.01f;
-		m_curAmbiant = Clamp( m_curAmbiant, 0.0f, 1.0f );
-		g_theRenderer->SetAmbientLight( Rgba::WHITE, m_curAmbiant );
-	}
-	//--------------------------------------------------------------------------
-	if( keyCode == 'G' )
-	{
-		m_emissiveFac += 0.01f;
-		m_emissiveFac = Clamp( m_emissiveFac, 0.0f, 1.0f );
-		g_theRenderer->SetEmissiveFactor( m_emissiveFac );
-	}
-	if( keyCode == 'F' )
-	{
-		m_emissiveFac -= 0.01f;
-		m_emissiveFac = Clamp( m_emissiveFac, 0.0f, 1.0f );
-		g_theRenderer->SetEmissiveFactor( m_emissiveFac );
-	}
+			// C
+		case 'C':
+			m_drag += 0.01f;
+			break;
 
-	if( keyCode == 'V' )
-	{
-		LightData light = g_theRenderer->GetLightAtSlot( 0 );
-		light.direction = m_curCamera->GetForward();
-		g_theRenderer->EnableLight( 0, light );
-	}
+			// X
+		case 'X':
+			m_drag -= 0.01f;
+			if( m_drag < 0.0f )
+			{
+				m_drag = 0.0f;
+			}
+			break;
+		case 'Z':
+			g_theApp->m_gameClock->ForceStep( 0.02 );
+			break;
 
+		case '1':
+			m_xRestrcted =! m_xRestrcted;
+			break;
+		case '2':
+			m_yRestrcted =! m_yRestrcted;
+			break;
+		case '3':
+			m_rotRestrcted =! m_rotRestrcted;
+			break;
+
+
+			// G
+		case 'G':
+			m_angularDrag += 0.01f;
+			break;
+
+			// F
+		case 'F':
+			m_angularDrag -= 0.01f;
+			if( m_angularDrag < 0.0f )
+			{
+				m_angularDrag = 0.0f;
+			}
+			break;
+
+
+		case 78: // 'N'
+			m_mass -= 0.15f;
+			if( m_mass < 0.1f )
+			{
+				m_mass = 0.1f;
+			}
+			break;
+		case 77: // 'M'
+			m_mass += 0.15f;
+			if( m_mass > 20.0f )
+			{
+				m_mass = 20.0f;
+			}
+			break;
+		case 188: // '.'
+			m_restitution -= 0.01f;
+			if( m_restitution < 0.0f )
+			{
+				m_restitution = 0.0f;
+			}
+			break;
+		case 190: // ','
+			m_restitution += 0.01f;
+			if( m_restitution > 1.0f )
+			{
+				m_restitution = 1.0f;
+			}
+			break;
+		case 't': // F5 press
+			return true;
+			break;
+		case 9: // Tab
+			SelectShape();
+			return true;
+		case ' ': // Space
+			DeselectShape();
+			return true;
+		case 46: // Delete
+			m_deletingSelected = true;
+			return true;
+
+		default:
+			break;
+		}
+	}
+	
 	
 	return false;
 }
@@ -203,6 +316,11 @@ void Game::UpdateGame( float deltaSeconds )
 		break;
 	}
 
+	if( m_deletingSelected )
+	{
+		DeleteShape();
+	}
+
 	float screenHeight = g_theDebugRenderSystem->GetScreenHeight() * .5f;
 	float screenWidth = g_theDebugRenderSystem->GetScreenWidth() * .5f;
 	Matrix44 camModle = m_curCamera->GetModelMatrix();
@@ -211,6 +329,194 @@ void Game::UpdateGame( float deltaSeconds )
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, "Camera: %.02f,%.02f,%.02f", m_curCamera->GetModelMatrix().m_values[Matrix44::Tx],  m_curCamera->GetModelMatrix().m_values[Matrix44::Ty],  m_curCamera->GetModelMatrix().m_values[Matrix44::Tz] );
 
 	UpdateCamera( deltaSeconds );
+}
+
+//--------------------------------------------------------------------------
+/**
+* GetCurrentMap
+*/
+Map* Game::GetCurrentMap()
+{
+	if( GAMESTATE_GAMEPLAY == m_state || GAMESTATE_EDITOR == m_state )
+	{
+		return m_maps[m_curMapIdx];
+	}
+	return nullptr;
+}
+
+//--------------------------------------------------------------------------
+/**
+* SelectShape
+*/
+void Game::SelectShape()
+{
+	if( GetCurrentMap()->GetNumShapes() == 0 )
+	{
+		return;
+	}
+	if( m_selectedShape )
+	{
+		// Find where to start searching for next.
+		int newIndex = 0;
+		for( int shapeIndex = 0; shapeIndex < (int) GetCurrentMap()->m_shapes.size(); ++shapeIndex )
+		{
+			if( m_selectedShape == GetCurrentMap()->m_shapes[shapeIndex] )
+			{
+				newIndex = ++shapeIndex;
+				break;
+			}
+
+		}
+
+		// Don't go out of bounds
+		if( newIndex >= (int) GetCurrentMap()->m_shapes.size() )
+		{
+			newIndex = 0;
+		}
+
+		// Find next item to select
+		int toSelectIndex = newIndex;
+		int counter = 300;
+		while ( !GetCurrentMap()->m_shapes[toSelectIndex] )
+		{
+			toSelectIndex++;
+			counter--;
+			if( toSelectIndex >= (int) GetCurrentMap()->m_shapes.size() )
+			{
+				toSelectIndex = 0;
+			}
+			if( counter == 0 )
+			{
+				break;
+			}
+		}
+
+		// Only select if found one that exists.
+		if( GetCurrentMap()->m_shapes[toSelectIndex] )
+		{
+			DeselectShape();
+			m_selectedShape = GetCurrentMap()->m_shapes[toSelectIndex];
+			m_selectedShape->m_selected = true;
+			m_selectedShape->m_rigidbody->SetSimulationType( ePhysicsSimulationType::PHYSICS_SIM_STATIC );
+			m_cursor->m_trasform.m_position = m_selectedShape->GetPosition();
+
+			m_xRestrcted	= m_selectedShape->m_rigidbody->IsXRestricted();
+			m_yRestrcted	= m_selectedShape->m_rigidbody->IsYRestricted();
+			m_rotRestrcted	= m_selectedShape->m_rigidbody->IsRotRestricted();
+
+			// 			m_restitution	= m_selectedShape->m_rigidbody->GetRestitution();
+			// 			m_friction		= m_selectedShape->m_rigidbody->GetFriction();
+			// 			m_mass			= m_selectedShape->m_rigidbody->GetMass();
+			// 			m_angularDrag	= m_selectedShape->m_rigidbody->GetAngularDrag();
+			// 			m_drag			= m_selectedShape->m_rigidbody->GetDrag();
+		}
+	}
+	else
+	{
+		Shape* closestShape = nullptr;
+		float closestDistance = 999999999999.0f;
+		for( int shapeIndex = 0; shapeIndex < (int)  GetCurrentMap()->m_shapes.size(); ++shapeIndex )
+		{
+			if(  GetCurrentMap()->m_shapes[shapeIndex] )
+			{
+				Shape* testShape =  GetCurrentMap()->m_shapes[shapeIndex];
+				float testDist = ( m_cursor->m_trasform.m_position - testShape->GetPosition() ).GetLengthSquared();
+				if( testDist < closestDistance )
+				{
+					closestDistance = testDist;
+					closestShape = testShape;
+				}
+			}
+		}
+		// Only select if found one that exists.
+		if( closestShape )
+		{
+			m_selectedShape = closestShape;
+			m_selectedShape->m_selected = true;
+			m_selectedShape->m_rigidbody->SetSimulationType( ePhysicsSimulationType::PHYSICS_SIM_STATIC );
+			m_cursor->m_trasform.m_position = m_selectedShape->GetPosition();
+
+			m_xRestrcted	= m_selectedShape->m_rigidbody->IsXRestricted();
+			m_yRestrcted	= m_selectedShape->m_rigidbody->IsYRestricted();
+			m_rotRestrcted	= m_selectedShape->m_rigidbody->IsRotRestricted();
+
+			// 			m_restitution	= m_selectedShape->m_rigidbody->GetRestitution();
+			// 			m_friction		= m_selectedShape->m_rigidbody->GetFriction();
+			// 			m_mass			= m_selectedShape->m_rigidbody->GetMass();
+			// 			m_angularDrag	= m_selectedShape->m_rigidbody->GetAngularDrag();
+			// 			m_drag			= m_selectedShape->m_rigidbody->GetDrag();
+		}
+	}
+}
+
+//--------------------------------------------------------------------------
+/**
+* IsHovering
+*/
+bool Game::IsHovering( Shape* shape ) const
+{
+	Collision2D collisionInfo;
+	DiscCollider2D cursorCollider( m_cursor->m_trasform.m_position, m_cursor->m_disc.m_radius );
+	return shape->m_collider->IsTouching( &cursorCollider, &collisionInfo );
+}
+
+//--------------------------------------------------------------------------
+/**
+* DeselectShape
+*/
+void Game::DeselectShape()
+{
+	if( m_selectedShape )
+	{
+		m_selectedShape->m_rigidbody->ResetSimulationType();
+		m_selectedShape->m_selected = false;
+		m_selectedShape = nullptr;
+	}
+}
+
+//--------------------------------------------------------------------------
+/**
+* DeleteShape
+*/
+void Game::DeleteShape()
+{
+	if( m_selectedShape )
+	{
+		m_selectedShape->m_isGarbage = true;
+		m_selectedShape = nullptr;
+	}
+}
+
+//--------------------------------------------------------------------------
+/**
+* BeginShapeConstruction
+*/
+void Game::BeginShapeConstruction()
+{
+	if( !m_constructing )
+	{
+		m_constStart = m_cursor->m_trasform.m_position;
+		m_constEnd = m_cursor->m_trasform.m_position;
+		m_constructing = true;
+	}
+}
+
+//--------------------------------------------------------------------------
+/**
+* EndShapeConstruction
+*/
+void Game::EndShapeConstruction()
+{
+	if( m_constructing )
+	{
+		m_constEnd =  m_cursor->m_trasform.m_position;
+		Vec2 disp = m_constEnd - m_constStart;
+		Transform2D trans( m_constStart + disp * 0.5f, disp.GetAngleDegrees() );
+		Shape* shape = new Pill( trans , m_spawnDynamic ? PHYSICS_SIM_DYNAMIC : PHYSICS_SIM_STATIC, disp.GetLength(), m_curThickness, m_curRadius, m_mass, m_restitution, m_friction, m_drag, m_angularDrag );
+		shape->m_rigidbody->SetRestrictions( m_xRestrcted, m_yRestrcted, m_rotRestrcted );
+		m_maps[m_curMapIdx]->AddShape( shape );
+		m_constructing = false;
+	}
 }
 
 //--------------------------------------------------------------------------
@@ -334,13 +640,24 @@ void Game::RenderMainMenu() const
 void Game::RenderEditor() const
 {
 	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
+	m_cursor->Render();
 	m_maps[0]->Render();
-	g_theRenderer->EndCamera();
-	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
-	m_UICamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
-	m_UICamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
-	g_theRenderer->BeginCamera( &m_UICamera );
-	m_editorCanvis.Render();
+
+	if( m_constructing )
+	{
+		if( m_constStart != m_cursor->m_trasform.m_position )
+		{
+			std::vector<Vertex_PCU> verts;
+			AddVertsForLine2D( verts, m_constStart, m_cursor->m_trasform.m_position, 0.05f, Rgba::DARK_RED );
+			g_theRenderer->DrawVertexArray( verts );
+		}
+	}
+
+// 	g_theRenderer->BindMaterial( g_theRenderer->CreateOrGetMaterialFromXML( "Data/Materials/default_unlit.mat" ) );
+// 	m_UICamera.SetColorTargetView( g_theRenderer->GetColorTargetView() );
+// 	m_UICamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
+// 	g_theRenderer->BeginCamera( &m_UICamera );
+// 	m_editorCanvis.Render();
 }
 
 //--------------------------------------------------------------------------
@@ -361,6 +678,24 @@ void Game::RenderPauseMenu() const
 	m_UICamera.SetDepthTargetView( g_theRenderer->GetDepthTargetView() );
 	g_theRenderer->BeginCamera( &m_UICamera );
 	m_pauseMenuCanvis.Render();
+}
+
+//--------------------------------------------------------------------------
+/**
+* DrawEditorValues
+*/
+void Game::DrawEditorValues()
+{
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Number of Objects:	   %d", GetCurrentMap()->m_shapes.size() ).c_str() );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Mass[n,m]:       %.2f", m_mass ).c_str() );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Restitution[<,>]:%.2f", m_restitution ).c_str() );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Friction[V,B]:   %.2f", m_friction ).c_str() );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Drag[X,C]:	   %.2f", m_drag ).c_str() );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects AngularDrag[F,G]:%.2f", m_angularDrag ).c_str() );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Radius[K,L]:	   %.2f", m_curRadius ).c_str() );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Thickness[H,J]:  %.2f", m_curThickness ).c_str() );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Type[']: %s", m_spawnDynamic ? "DYNAMIC" : "STATIC" ).c_str() );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Restrictions :  x:%s, y:%s Rot: %s", m_xRestrcted ? "True " : "False", m_yRestrcted ? "True " : "False", m_rotRestrcted ? "True " : "False" ).c_str() );
 }
 
 //--------------------------------------------------------------------------
@@ -630,8 +965,11 @@ void Game::UpdateEditor( float deltaSec )
 	{
 		UpdateEditorUI( deltaSec );
 	}
-
+	
+	m_cursor->Update( deltaSec );
 	m_maps[0]->Update( deltaSec );
+	DrawEditorValues();
+
 }
 
 //--------------------------------------------------------------------------
@@ -667,6 +1005,13 @@ void Game::UpdatePauseMenu()
 */
 void Game::LMouseDown()
 {
+	if(  m_state == GAMESTATE_EDITOR  )
+	{
+		if( !g_theApp->IsPaused() )
+		{
+			BeginShapeConstruction();
+		}
+	}
 
 }
 
@@ -691,6 +1036,8 @@ void Game::LMouseUp()
 		else
 		{
 			m_editorCanvis.ProcessInput( event );
+			EndShapeConstruction();
+
 		}
 	}
 	if( m_state == GAMESTATE_GAMEPLAY )
@@ -712,7 +1059,7 @@ void Game::LMouseUp()
 */
 void Game::RMouseDown()
 {
-	
+	SelectShape();
 }
 
 //--------------------------------------------------------------------------
@@ -721,7 +1068,7 @@ void Game::RMouseDown()
 */
 void Game::RMouseUp()
 {
-
+	DeselectShape();
 }
 
 //--------------------------------------------------------------------------
@@ -743,29 +1090,20 @@ void Game::InisializeGame()
 		return;
 	}	
 
-	LightData light;
-	light.is_direction = 1.0f;
-	light.color = Rgba(1.0f, 1.0f, 1.0f, 1.0f);
-	light.color.a = 1.0f;
-	light.direction = Vec3( -1.0f, 1.0f, 1.0f ).GetNormalized();
-	light.position = Vec3::ZERO;
-	g_theRenderer->EnableLight( 0, light );
-
-	g_theRenderer->SetSpecFactor( m_specFact );
-	g_theRenderer->SetSpecPower( m_specPow );
-	g_theRenderer->SetEmissiveFactor( m_emissiveFac );
-	g_theRenderer->SetAmbientLight( Rgba::WHITE, m_curAmbiant );
-
 	g_theEventSystem->SubscribeEventCallbackFunction( "play", LoadToLevel );
+	g_theEventSystem->SubscribeEventCallbackFunction( "save", Save );
+	g_theEventSystem->SubscribeEventCallbackFunction( "load", LoadMap );
 
 	Map* editMap =  new Map( g_theRenderer );
 	m_maps.push_back( editMap );
-	editMap->Load( "UNUSED_RIGHT_NOW" );
+	editMap->Load( "map0" );
 	editMap =  new Map( g_theRenderer );
 	m_maps.push_back( editMap );
-	editMap->Load( "UNUSED_RIGHT_NOW" );
+	editMap->Load( "map1" );
 
 	initGame = true;
+
+	m_cursor = new Cursor();
 
 	SetupMainMenuUI();
 	SetupEditorUI();
@@ -789,7 +1127,7 @@ void Game::LoadLevel( unsigned int index )
 	
 	if( !m_maps[index]->IsLoaded() )
 	{
-		m_maps[index]->Load( "UNUSED RIGHT NOW" );
+		m_maps[index]->Load( Stringf("map%u", index ).c_str() );
 	}
 	SwitchStates( m_curMapIdx == 0 ? GAMESTATE_EDITOR : GAMESTATE_GAMEPLAY );
 }
@@ -804,6 +1142,35 @@ bool Game::LoadToLevel( EventArgs& args )
 	g_theGame->SwitchStates( GAMESTATE_LOADING );
 	g_theGame->m_curMapIdx = level;
 	return true;
+}
+
+//--------------------------------------------------------------------------
+/**
+* LoadMap
+*/
+bool Game::LoadMap( EventArgs& args )
+{
+	std::string fileName = args.GetValue( "fileName", "COULD_NOT_FIND_FILENAME" );
+	std::string filePath = Stringf( "Data/Saved/%s.map", fileName.c_str() );
+
+	return g_theGame->GetCurrentMap()->Load( filePath.c_str() );
+}
+
+//--------------------------------------------------------------------------
+/**
+* Save
+*/
+bool Game::Save( EventArgs& args )
+{
+	std::string fileName = args.GetValue( "fileName", "COULD_NOT_FIND_FILENAME" );
+	std::string filePath = Stringf( "Data/Saved/%s.map", fileName.c_str() );
+
+	if( fileName == "COULD_NOT_FIND_FILENAME" )
+	{
+		return false;
+	}
+
+	return g_theGame->GetCurrentMap()->Save( filePath.c_str() );
 }
 
 //--------------------------------------------------------------------------

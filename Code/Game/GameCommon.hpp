@@ -43,6 +43,11 @@ constexpr float SCREEN_HEIGHT = 100.0f;
 constexpr float SCREEN_HALF_WIDTH = 200.0f * .5f;
 constexpr float SCREEN_HALF_HEIGHT = 100.0f * .5f;
 
+constexpr float MAP_SCREEN_WIDTH = 20.f;
+constexpr float MAP_SCREEN_HEIGHT = 10.0f;
+constexpr float MAP_SCREEN_HALF_WIDTH = MAP_SCREEN_WIDTH * .5f;
+constexpr float MAP_SCREEN_HALF_HEIGHT = MAP_SCREEN_HEIGHT * .5f;
+
 enum eGameStates
 {
 	GAMESTATE_INIT,

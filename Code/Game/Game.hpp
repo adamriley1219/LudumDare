@@ -13,6 +13,8 @@ class Material;
 class Map;
 class StopWatch;
 class UniformBuffer;
+class Cursor;
+class Shape;
 
 struct singleEffect
 {
@@ -29,8 +31,10 @@ struct matrixEffect
 
 class Game
 {
-	friend App;
-	friend GameController;
+	friend class App;
+	friend class Map;
+	friend class Cursor;
+	friend class GameController;
 public:
 	Game();
 	~Game();
@@ -45,6 +49,20 @@ public:
 	void GameRender() const;
 	void UpdateGame( float deltaSeconds );
 
+public:
+	// Gameplay
+	Map* GetCurrentMap();
+
+	// Editor
+	void SelectShape();
+	bool IsHovering( Shape* shape ) const;
+	void DeselectShape();
+	void DeleteShape();
+
+	void BeginShapeConstruction();
+	void EndShapeConstruction();
+
+
 private:
 	//Render
 	void RenderMap( unsigned int index ) const;
@@ -54,6 +72,7 @@ private:
 	void RenderMainMenu() const;
 	void RenderEditor() const;
 	void RenderPauseMenu() const;
+	void DrawEditorValues();
 
 	// UI Setup
 	void SetupMainMenuUI();
@@ -78,6 +97,8 @@ private:
 
 private:
 	static bool LoadToLevel( EventArgs& args );
+	static bool LoadMap( EventArgs& args );
+	static bool Save( EventArgs& args );
 
 private:
 	void UpdateStates();
@@ -89,6 +110,31 @@ public:
 
 private:
 	void RenderFade() const;
+
+private:
+	// Editor
+	float m_restitution = 0.0f;
+	float m_friction	= 0.2f;
+	float m_mass		= 1.0f;
+	float m_angularDrag = 0.0f;
+	float m_drag		= 0.5f;
+
+	bool m_xRestrcted = false;
+	bool m_yRestrcted = false;
+	bool m_rotRestrcted = false;
+
+	float m_curRadius = 0.7f;
+	float m_curThickness = 0.0f;
+	bool m_spawnDynamic = true;
+		
+		// Selecting
+		bool m_deletingSelected = false;
+		Vec2 m_constStart = Vec2::ZERO;
+		Vec2 m_constEnd = Vec2::ZERO;
+		bool m_constructing  = false;
+		Shape* m_selectedShape = nullptr;
+		Cursor* m_cursor;
+
 
 private:
 	// Getters
