@@ -1,12 +1,25 @@
 #pragma once
 #include "Engine/Math/Vec3.hpp"
+#include <string>
 
 struct Vertex_PCU;
 class Entity;
 class Camera;
 
-float GetRandomlyChosenFloat( float a, float b );
+//--------------------------------------------------------------------------
+enum eAlignment
+{
+	ALIGNMENT_PLAYER,
+	ALIGNMENT_NEUTRAL,
+	ALIGNMENT_ALLY,
+	ALIGNMENT_ENEMY,
 
+};
+
+//--------------------------------------------------------------------------
+float GetRandomlyChosenFloat( float a, float b );
+eAlignment GetAlignmentFromString( const std::string& string );
+std::string GetStringFromAlignment( eAlignment alignment );
 
 struct matStruct
 {
@@ -14,11 +27,3 @@ struct matStruct
 	Vec3 padding;
 };
 
-enum eAlignment
-{
-	ALIGNMENT_PLAYER,
-	ALIGNMENT_NURTAL,
-	ALIGNMENT_ALLY,
-	ALIGNMENT_ENEMY,
-	
-};

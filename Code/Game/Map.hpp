@@ -65,13 +65,14 @@ private:
 	uint GetNumShapes() const;
 
 private:
-	void UpdateCamera( float deltaSec );
+	void UpdatePlayerPosAndCamera( float deltaSec );
 
 private:
 	// Gameplay
 	std::vector<Shape*> m_shapes;
-	Shape* m_player;
-	Shape* m_endZone;
+	Shape* m_player = nullptr;
+	Vec2 m_endZone = Vec2( 5.0f, 5.0f );
+	float m_endZoneRadius = 2.0f;
 	float m_camScale = 1.0f;
 
 private: 
@@ -87,6 +88,7 @@ private:
 	FollowCamera2D* m_camera = nullptr;
 
 	RenderContext* m_renderContext = nullptr;
+	std::string m_filename = "";
 
 private:
 	bool m_hasLoaded = false;

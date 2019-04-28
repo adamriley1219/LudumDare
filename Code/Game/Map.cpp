@@ -18,6 +18,7 @@
 #include "Game/GameCommon.hpp"
 #include "Game/FollowCamera2D.hpp"
 #include "Game/GameController.hpp"
+#include "Engine/Core/Time/StopWatch.hpp"
 
 //--------------------------------------------------------------------------
 /**
@@ -30,8 +31,6 @@ Map::Map( RenderContext* context )
 	m_camera = new FollowCamera2D();
 	m_camera->SetColorTargetView( context->GetColorTargetView() );
 	m_camera->SetDepthTargetView( context->GetDepthTargetView() );
-	m_player = new Pill( Transform2D( Vec2::ZERO ), PHYSICS_SIM_DYNAMIC, 0.0f, 0.0f, 1.0f );
-	AddShape( m_player );
 }
 
 //--------------------------------------------------------------------------
@@ -45,12 +44,14 @@ Map::~Map()
 	DeleteAllShapes();
 }
 
+
 //--------------------------------------------------------------------------
 /**
 * Load
 */
 bool Map::Load( char const *filename )
 {
+	m_filename = filename;
 	tinyxml2::XMLDocument config;
 	config.LoadFile( filename );
 	XmlElement* root = config.RootElement();
@@ -58,6 +59,7 @@ bool Map::Load( char const *filename )
 	if( root )
 	{
 		DeleteAllShapes();
+		m_endZone = ParseXmlAttribute( *root, "endZone", Vec2( 5.0f, 5.0f ) );
 
 		for( XmlElement* xmlShape = root->FirstChildElement( "shape" ); xmlShape != NULL; xmlShape = xmlShape->NextSiblingElement( "shape" ) )
 		{
@@ -68,13 +70,15 @@ bool Map::Load( char const *filename )
 			float mass				= ParseXmlAttribute( *rbEle, "mass", 1.0f );
 			float angularDrag		= ParseXmlAttribute( *rbEle, "angularDrag", 0.0f );
 			float drag				= ParseXmlAttribute( *rbEle, "drag", 0.5f );
+			float angularVel		= ParseXmlAttribute( *rbEle, "angularVelocity", 0.5f );
 
 
-			std::string xRestrcted			= ParseXmlAttribute( *rbEle, "xRestrcted", "false" );
-			std::string yRestrcted			= ParseXmlAttribute( *rbEle, "yRestrcted", "false" );
-			std::string rotRestrcted		= ParseXmlAttribute( *rbEle, "rotRestrcted", "false" );
+			std::string xRestrcted			= ParseXmlAttribute( *rbEle, "xRestricted", "false" );
+			std::string yRestrcted			= ParseXmlAttribute( *rbEle, "yRestricted", "false" );
+			std::string rotRestrcted		= ParseXmlAttribute( *rbEle, "rotRestricted", "false" );
 
 			std::string type		= ParseXmlAttribute( *rbEle, "type", "static" );
+
 
 			XmlElement* colEle = xmlShape->FirstChildElement( "collider" );
 
@@ -88,10 +92,18 @@ bool Map::Load( char const *filename )
 			Vec2 pos	= ParseXmlAttribute( *transEle, "pos", Vec2::ZERO );
 			Vec2 scale	= ParseXmlAttribute( *transEle, "scale", Vec2::ZERO );
 			float rot	= ParseXmlAttribute( *transEle, "rot", 0.0f );
+			std::string alignString	= ParseXmlAttribute( *transEle, "alignment", "neutral" );
+			eAlignment alignment	= GetAlignmentFromString( alignString );
+
 
 			Transform2D trans( pos, rot, scale );
-			Shape* shape = new Pill( trans, type == "dynamic" ? PHYSICS_SIM_DYNAMIC : PHYSICS_SIM_STATIC, exstents.x * 2.0f, exstents.y * 2.0f, radius, mass, restitution, friction, drag, angularDrag );
+			Shape* shape = new Pill( trans, type == "dynamic" ? PHYSICS_SIM_DYNAMIC : PHYSICS_SIM_STATIC, alignment, exstents.x * 2.0f, exstents.y * 2.0f, radius, mass, restitution, friction, drag, angularDrag );
+			shape->m_rigidbody->SetAngularVelocity( angularVel );
 			shape->m_rigidbody->SetRestrictions( xRestrcted == "true", yRestrcted == "true", rotRestrcted == "true" );
+			if( alignment == ALIGNMENT_PLAYER )
+			{
+				m_player = shape;
+			}
 			AddShape( shape );
 
 		}
@@ -99,7 +111,14 @@ bool Map::Load( char const *filename )
 
 
 	}
-	m_camera->SetFocalPoint( Vec2( 32.0f, 32.0f ) );
+	if( m_player )
+	{
+		m_camera->SetFocalPoint( m_player->GetPosition() );
+	}
+	else
+	{
+		m_camera->SetFocalPoint( Vec2( 1, 1 ) );
+	}
 	m_hasLoaded = true;
 	return Create( 64, 64 );
 }
@@ -115,6 +134,7 @@ bool Map::Save( const char* filePath )
 	config.InsertFirstChild( root );
 
 	root->SetAttribute( "mapDims", Stringf( "%f,%f", WORLD_WIDTH, WORLD_HEIGHT ).c_str() );
+	root->SetAttribute( "endZone", Stringf( "%f,%f", m_endZone.x, m_endZone.y ).c_str() );
 
 	for( unsigned int shapeIdx = 0; shapeIdx < ( unsigned int ) m_shapes.size(); ++shapeIdx )
 	{
@@ -137,6 +157,7 @@ bool Map::Save( const char* filePath )
 			shapeTransEle->SetAttribute( "pos", Stringf( "%f,%f", shape->m_transform.m_position.x, shape->m_transform.m_position.y ).c_str() );
 			shapeTransEle->SetAttribute( "scale", Stringf( "%f,%f", shape->m_transform.m_scale.x, shape->m_transform.m_scale.y ).c_str() );
 			shapeTransEle->SetAttribute( "rot", Stringf( "%f", shape->m_transform.m_rotation ).c_str() );
+			shapeTransEle->SetAttribute( "alignment", Stringf( "%s", GetStringFromAlignment( shape->m_alignment ).c_str() ).c_str() );
 		}
 	}
 
@@ -151,7 +172,6 @@ bool Map::Create( int tileWidth, int tileHeight )
 {
 	m_tileDimensions = IntVec2( tileWidth, tileHeight );
 	m_vertDimensions = IntVec2( 2 * tileWidth + 1, 2 * tileHeight + 1 );
-	GenerateTerrainMesh();
 	return true;
 }
 
@@ -161,7 +181,7 @@ bool Map::Create( int tileWidth, int tileHeight )
 */
 void Map::Update( float deltaSec )
 {
-	UpdateCamera( deltaSec );
+	UpdatePlayerPosAndCamera( deltaSec );
  	Vec3 mousePos = g_theGameController->GetWorldMousePos();
  	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, "Mouse World Pos: %f, %f, %f", mousePos.x, mousePos.y, mousePos.z );
 	for( Shape* s : m_shapes )
@@ -170,6 +190,20 @@ void Map::Update( float deltaSec )
 		{
 			s->Update( deltaSec );
 		}
+	}
+	if( m_player->IsAlive() && m_player->m_collider->IsColliding() )
+	{
+		m_player->m_preventInputTimer->Reset();
+		m_player->m_health -= m_player->GetCollisionDamage();
+		m_player->m_transform.m_scale = Vec2( m_player->m_health, m_player->m_health );
+		if( m_player->m_health < .5f )
+		{
+			Load( m_filename.c_str() );
+		}
+	}
+	if( ( m_player->GetPosition() - m_endZone ).GetLength() < m_endZoneRadius )
+	{
+		g_theGame->LoadNextMap();
 	}
 	GarbageCollection();
 }
@@ -180,7 +214,9 @@ void Map::Update( float deltaSec )
 */
 void Map::Render() const
 {
-	RenderTerrain();
+	std::vector<Vertex_PCU> verts;
+	AddVertsForRing2D( verts, m_endZone, m_endZoneRadius, 0.05f, Rgba::YELLOW, 6 );
+	g_theRenderer->DrawVertexArray( verts );
 	for( Shape* s : m_shapes )
 	{
 		if( s )
@@ -188,7 +224,6 @@ void Map::Render() const
 			s->Render();
 		}
 	}
-
 }
 
 //--------------------------------------------------------------------------
@@ -263,7 +298,7 @@ void Map::GenerateTerrainMesh()
 			plane.AddIndexedTriangle( GetVertIndex( wInt, hIdx ), GetVertIndex( wInt + 1, hIdx + 1 ), GetVertIndex( wInt, hIdx + 1 ) );
 		}
 	}
-
+	SAFE_DELETE( m_terrainMesh );
 	m_terrainMesh = new MeshGPU( g_theRenderer );
 	m_terrainMesh->CreateFromCPUMesh<Vertex_LIT>( &plane );
 }
@@ -291,6 +326,10 @@ void Map::GarbageCollection()
 			{
 				g_theGame->DeselectShape();
 			}
+			if( s == m_player )
+			{
+				m_player = nullptr;
+			}
 			RemoveShape( s );
 		}
 	}
@@ -302,10 +341,15 @@ void Map::GarbageCollection()
 */
 void Map::DeleteAllShapes()
 {
+	m_hasLoaded = false;
 	for( Shape* s: m_shapes )
 	{
 		if( s )
 		{
+			if( s == m_player )
+			{
+				m_player = nullptr;
+			}
 			SAFE_DELETE(s);
 		}
 	}
@@ -357,19 +401,40 @@ uint Map::GetNumShapes() const
 
 //--------------------------------------------------------------------------
 /**
-* UpdateCamera
+* UpdatePlayerPosAndCamera
 */
-void Map::UpdateCamera( float deltaSec )
+void Map::UpdatePlayerPosAndCamera( float deltaSec )
 {
-	// calc focus point
-	Vec2 curPos = m_camera->m_focusPoint;
-	Vec2 movement = g_theGameController->GetFramePan() * deltaSec;
-	Vec3 right = m_camera->GetRight();
-	Vec3 forward = m_camera->GetForward();
-	Vec3 flatForward = Vec3( forward.x, forward.y, 0.0f );
-	flatForward.Normalize();
+	if( g_theGame->m_state == GAMESTATE_EDITOR  )
+	{
+		Vec2 curPos = m_camera->m_focusPoint;
+		Vec2 movement = g_theGameController->GetFramePan() * deltaSec;
+		m_camera->SetFocalPoint( Vec2( curPos.x + movement.x, curPos.y + movement.y ) );
 
-	m_camera->SetFocalPoint( Vec2( curPos.x + movement.x, curPos.y + movement.y ) );
+	}
+	else if ( m_player )
+	{
+		// calc focus point
+		float speed = m_player->m_rigidbody->GetVelocity().GetLength();
+
+		Vec2 movement = g_theGameController->GetFramePan() * deltaSec;
+		Vec3 right = m_camera->GetRight();
+		Vec3 forward = m_camera->GetForward();
+		Vec2 flatForward = Vec2( forward.x, 1.0f );
+		Vec2 flatRight = Vec2( right );
+		flatForward.Normalize();
+		flatRight.Normalize();
+
+		if( m_player->m_preventInputTimer->HasElapsed() )
+		{
+			m_player->m_rigidbody->AddForce( ( flatForward * movement.y + flatRight * movement.x ) * m_player->m_speed );
+		}
+		
+
+		Vec2 curPos = m_camera->m_focusPoint;
+		Vec2 lerpedPos = Lerp( curPos, m_player->GetPosition(), .7f * deltaSec * RangeMapFloat( speed, 0.0f, 5.0f, 1.0f, 5.0f ) );
+		m_camera->SetFocalPoint( lerpedPos );
+	}
 	
 	m_camera->SetZoom( g_theGameController->GetFrameZoom() );
 

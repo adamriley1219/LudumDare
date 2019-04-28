@@ -62,6 +62,8 @@ public:
 	void BeginShapeConstruction();
 	void EndShapeConstruction();
 
+	void ToggleAlignment();
+	void SetEnd();
 
 private:
 	//Render
@@ -80,7 +82,7 @@ private:
 	void SetUpPauseMenu();
 
 	//Update
-	void UpdateCamera( float deltaSeconds );
+	void UpdatePlayerPosAndCamera( float deltaSeconds );
 	void UpdateMainMenu(); 
 	void UpdateMap( float deltaSec, unsigned int  index );
 	void UpdateEditor( float deltaSec );
@@ -94,6 +96,7 @@ private:
 
 	void InisializeGame();
 	void LoadLevel( unsigned int index );
+	void LoadNextMap();
 
 private:
 	static bool LoadToLevel( EventArgs& args );
@@ -113,19 +116,21 @@ private:
 
 private:
 	// Editor
-	float m_restitution = 0.0f;
+	float m_restitution = 0.9f;
 	float m_friction	= 0.2f;
 	float m_mass		= 1.0f;
 	float m_angularDrag = 0.0f;
 	float m_drag		= 0.5f;
+	float m_angularVel	= 0.0f;
 
 	bool m_xRestrcted = false;
 	bool m_yRestrcted = false;
 	bool m_rotRestrcted = false;
 
-	float m_curRadius = 0.7f;
-	float m_curThickness = 0.0f;
+	float m_curRadius = 0.0f;
+	float m_curThickness = 1.5f;
 	bool m_spawnDynamic = true;
+	eAlignment m_curAlignment = ALIGNMENT_NEUTRAL;
 		
 		// Selecting
 		bool m_deletingSelected = false;
@@ -144,6 +149,7 @@ private:
 	eGameStates m_state = GAMESTATE_INIT;
 	eGameStates m_switchToState = m_state;
 	unsigned int  m_curMapIdx = 1;
+	bool		  m_toNextLevel = false;
 	std::vector<Map*> m_maps;
 
 private:

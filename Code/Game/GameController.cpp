@@ -4,6 +4,7 @@
 #include "Engine/Core/WindowContext.hpp"
 #include "Game/Game.hpp"
 #include "Game/FollowCamera2D.hpp"
+#include "Engine/Core/DevConsole.hpp"
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -81,19 +82,20 @@ void GameController::Update( float deltaSec )
 */
 Vec2 GameController::GetFramePan() const
 {
+	bool consoleOpen = g_theConsole->IsOpen();
 	Vec2 ret = Vec2::ZERO;
-	ret += Vec2( g_theInputSystem->KeyIsDown( KEY_A ) ? -1.0f : 0.0f, 0.0f );
-	ret += Vec2( g_theInputSystem->KeyIsDown( KEY_D ) ? 1.0f : 0.0f, 0.0f );
-	ret += Vec2( 0.0f, g_theInputSystem->KeyIsDown( KEY_S ) ? -1.0f : 0.0f );
-	ret += Vec2( 0.0f, g_theInputSystem->KeyIsDown( KEY_W ) ? 1.0f : 0.0f );
+	ret += Vec2( g_theInputSystem->KeyIsDown( KEY_A ) && !consoleOpen ? -1.0f : 0.0f, 0.0f );
+	ret += Vec2( g_theInputSystem->KeyIsDown( KEY_D ) && !consoleOpen ? 1.0f : 0.0f, 0.0f );
+	ret += Vec2( 0.0f, g_theInputSystem->KeyIsDown( KEY_S ) && !consoleOpen ? -1.0f : 0.0f );
+	ret += Vec2( 0.0f, g_theInputSystem->KeyIsDown( KEY_W ) && !consoleOpen ? 1.0f : 0.0f );
 
 	IntVec2 pos = g_theWindowContext->GetClientMousePosition();
 	AABB2 screen = g_theWindowContext->GetClientScreen();
 
-	ret += Vec2( pos.x >= screen.GetTopRight().x - 1 ? 1.0f : 0.0f, 0.0f );
-	ret += Vec2( pos.x <= screen.GetBottomLeft().x ? -1.0f : 0.0f, 0.0f );
-	ret += Vec2( 0.0f, pos.y >= screen.GetBottomLeft().y - 1 ? -1.0f : 0.0f );
-	ret += Vec2( 0.0f, pos.y <= screen.GetTopRight().y ? 1.0f : 0.0f );
+	ret += Vec2( pos.x >= screen.GetTopRight().x - 1 && !consoleOpen ? 1.0f : 0.0f, 0.0f );
+	ret += Vec2( pos.x <= screen.GetBottomLeft().x && !consoleOpen ? -1.0f : 0.0f, 0.0f );
+	ret += Vec2( 0.0f, pos.y >= screen.GetBottomLeft().y - 1 && !consoleOpen ? -1.0f : 0.0f );
+	ret += Vec2( 0.0f, pos.y <= screen.GetTopRight().y && !consoleOpen ? 1.0f : 0.0f );
 
 	ret.Normalize();
 	ret *= m_keyboardPanSpeed;

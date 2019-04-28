@@ -12,10 +12,10 @@
 /**
 * Box
 */
-Pill::Pill( const Transform2D& spawnLoaction , ePhysicsSimulationType simType
+Pill::Pill( const Transform2D& spawnLoaction , ePhysicsSimulationType simType, eAlignment alignment
 	, float width /* = 1.0f */, float height /*= 1.0f*/, float radius /*= 1.0f*/
 	, float mass /*= 1.0f*/, float restitution /*= 1.0f*/, float friction /*= 1.0f*/, float drag /*= 0.0f*/, float angularDrag /*= 0.0f*/ )
-	: Shape( spawnLoaction, simType )
+	: Shape( spawnLoaction, simType, alignment )
 {
 	// give it a shape 
 	m_collider = m_rigidbody->SetCollider( new PillboxCollider2D( Pillbox2( Vec2( 0.0f, 0.0f ), radius, Vec2( width * .5f, height * .5f ) ) ) );  
@@ -77,21 +77,22 @@ void Pill::Render() const
 {
 	g_theRenderer->BindTextureView( 0, nullptr );
 
-	Rgba color = m_color;
+	Rgba color = Lerp( m_color, m_dyingColor, RangeMapFloat( m_health, .5f, 1.0f, 1.0f, 0.0f ) );
+	Rgba boarderColor = DeterminColor();
 
 	std::vector<Vertex_PCU> verts;
-	const Pillbox2 pill( Vec2( 0.0f, 0.0f ), m_radius, Vec2( m_width * .5f, m_height * 0.5f ), m_transform.m_rotation );
+	const Pillbox2 pill =  ( (PillboxCollider2D*) m_collider )->GetWorldShape();
 
-	Vec2 BL = pill.m_obb.m_center - pill.m_obb.m_extents.x * pill.m_obb.GetRight() - pill.m_obb.GetUp() * pill.m_obb.m_extents.y + m_transform.m_position;
-	Vec2 TR = pill.m_obb.m_center + pill.m_obb.m_extents.x * pill.m_obb.GetRight() + pill.m_obb.GetUp() * pill.m_obb.m_extents.y + m_transform.m_position;
-	Vec2 TL = pill.m_obb.m_center + pill.m_obb.GetUp() * pill.m_obb.m_extents.y - pill.m_obb.GetRight() * pill.m_obb.m_extents.x + m_transform.m_position;
-	Vec2 BR = pill.m_obb.m_center - pill.m_obb.GetUp() * pill.m_obb.m_extents.y + pill.m_obb.GetRight() * pill.m_obb.m_extents.x + m_transform.m_position;
+	Vec2 BL = pill.m_obb.m_center - pill.m_obb.m_extents.x * pill.m_obb.GetRight() - pill.m_obb.GetUp() * pill.m_obb.m_extents.y;
+	Vec2 TR = pill.m_obb.m_center + pill.m_obb.m_extents.x * pill.m_obb.GetRight() + pill.m_obb.GetUp() * pill.m_obb.m_extents.y;
+	Vec2 TL = pill.m_obb.m_center + pill.m_obb.GetUp() * pill.m_obb.m_extents.y - pill.m_obb.GetRight() * pill.m_obb.m_extents.x;
+	Vec2 BR = pill.m_obb.m_center - pill.m_obb.GetUp() * pill.m_obb.m_extents.y + pill.m_obb.GetRight() * pill.m_obb.m_extents.x;
 
 	// Disc
 	if( BL == TL && BL == BR )
 	{
-		AddVertsForDisc2D( verts, BL, pill.m_radius, color, 24 );
-		AddVertsForRing2D( verts, BL, pill.m_radius, 0.05f, Rgba::BLACK, 24 );
+		AddVertsForDisc2D( verts, BL, pill.m_radius, color, 12 );
+		AddVertsForRing2D( verts, BL, pill.m_radius, 0.05f, boarderColor, 16 );
 		g_theRenderer->DrawVertexArray( verts );
 		return;
 	}
@@ -103,10 +104,10 @@ void Pill::Render() const
 		alongHeight.SetLength( pill.m_radius );
 		alongHeight.Rotate90Degrees();
 		AddVertsForTrimmedLine2D( verts, BL, TL, pill.m_radius * 2.0f, color );
-		AddVertsForLine2D( verts, BR - alongHeight, TR - alongHeight, 0.1f, m_boarderColor );
-		AddVertsForLine2D( verts, TL + alongHeight, BL + alongHeight, 0.1f, m_boarderColor );
-		AddVertsForDisc2D( verts, BL, pill.m_radius, color, 24 );
-		AddVertsForDisc2D( verts, TL, pill.m_radius, color, 24 );
+		AddVertsForLine2D( verts, BR - alongHeight, TR - alongHeight, 0.1f, boarderColor );
+		AddVertsForLine2D( verts, TL + alongHeight, BL + alongHeight, 0.1f, boarderColor );
+		AddVertsForDisc2D( verts, BL, pill.m_radius, color, 12 );
+		AddVertsForDisc2D( verts, TL, pill.m_radius, color, 12 );
 		g_theRenderer->DrawVertexArray( verts );
 		return;
 	}
@@ -118,10 +119,10 @@ void Pill::Render() const
 		alongWidth.SetLength( pill.m_radius );
 		alongWidth.RotateMinus90Degrees();
 		AddVertsForTrimmedLine2D( verts, BL, BR, pill.m_radius * 2.0f, color );
-		AddVertsForLine2D( verts, TR - alongWidth, TL - alongWidth, 0.1f, m_boarderColor );
-		AddVertsForLine2D( verts, BL + alongWidth, BR + alongWidth, 0.1f, m_boarderColor );
-		AddVertsForDisc2D( verts, BL, pill.m_radius, color, 24 );
-		AddVertsForDisc2D( verts, BR, pill.m_radius, color, 24 );
+		AddVertsForLine2D( verts, TR - alongWidth, TL - alongWidth, 0.1f, boarderColor );
+		AddVertsForLine2D( verts, BL + alongWidth, BR + alongWidth, 0.1f, boarderColor );
+		AddVertsForDisc2D( verts, BL, pill.m_radius, color, 12 );
+		AddVertsForDisc2D( verts, BR, pill.m_radius, color, 12 );
 		g_theRenderer->DrawVertexArray( verts );
 		return;
 	}
@@ -132,21 +133,21 @@ void Pill::Render() const
 	alongHeight.SetLength( pill.m_radius );
 	alongHeight.Rotate90Degrees();
 	AddVertsForTrimmedLine2D( verts, ( BL + TL ) * .5f, ( BR + TR ) * .5f, pill.m_radius * 2.0f + thickness, color );
-	AddVertsForLine2D( verts, BR - alongHeight, TR - alongHeight, 0.1f, m_boarderColor );
-	AddVertsForLine2D( verts, TL + alongHeight, BL + alongHeight, 0.1f, m_boarderColor );
+	AddVertsForLine2D( verts, BR - alongHeight, TR - alongHeight, 0.1f, boarderColor );
+	AddVertsForLine2D( verts, TL + alongHeight, BL + alongHeight, 0.1f, boarderColor );
 
 	Vec2 alongWidth = BR - BL;
 	thickness = alongWidth.GetLength();
 	alongWidth.SetLength( pill.m_radius );
 	alongWidth.RotateMinus90Degrees();
 	AddVertsForTrimmedLine2D( verts, ( BL + BR ) * .5f, ( TL + TR ) * .5f, pill.m_radius * 2.0f + thickness, color );
-	AddVertsForLine2D( verts, TR - alongWidth, TL - alongWidth, 0.1f, m_boarderColor );
-	AddVertsForLine2D( verts, BL + alongWidth, BR + alongWidth, 0.1f, m_boarderColor );
+	AddVertsForLine2D( verts, TR - alongWidth, TL - alongWidth, 0.1f, boarderColor );
+	AddVertsForLine2D( verts, BL + alongWidth, BR + alongWidth, 0.1f, boarderColor );
 
-	AddVertsForDisc2D( verts, BL, pill.m_radius, color, 24 );
-	AddVertsForDisc2D( verts, BR, pill.m_radius, color, 24 );
-	AddVertsForDisc2D( verts, TR, pill.m_radius, color, 24 );
-	AddVertsForDisc2D( verts, TL, pill.m_radius, color, 24 );
+	AddVertsForDisc2D( verts, BL, pill.m_radius, color, 12 );
+	AddVertsForDisc2D( verts, BR, pill.m_radius, color, 12 );
+	AddVertsForDisc2D( verts, TR, pill.m_radius, color, 12 );
+	AddVertsForDisc2D( verts, TL, pill.m_radius, color, 12 );
 
 	g_theRenderer->DrawVertexArray( verts );
 }

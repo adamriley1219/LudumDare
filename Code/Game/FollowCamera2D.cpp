@@ -49,7 +49,7 @@ void FollowCamera2D::SetFocalPoint( Vec2 const &pos )
 void FollowCamera2D::SetZoom( float zoom )
 {
 	m_zoom += zoom * -0.2f;
-	m_zoom = Clamp( m_zoom, 0.2f, 4.0f );
+	m_zoom = Clamp( m_zoom, 0.2f, 6.0f );
 
 	SetOrthographicProjection( Vec2( -MAP_SCREEN_HALF_WIDTH * 0.5f, -MAP_SCREEN_HALF_HEIGHT * 0.5f ) * m_zoom, Vec2( MAP_SCREEN_HALF_WIDTH * 0.5f, MAP_SCREEN_HALF_HEIGHT * 0.5f ) * m_zoom );
 }

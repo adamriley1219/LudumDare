@@ -26,7 +26,7 @@ public:
 
 public:
 	Vec2 m_focusPoint = Vec2( 1.0f, 1.0f ); 
-	float m_zoom	 = 1.0f;
+	float m_zoom	 =  4.0f;
 
 
 

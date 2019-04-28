@@ -12,7 +12,7 @@ class Shape
 	: public Entity
 {
 public:
-	explicit Shape( const Transform2D& spawnLoaction, ePhysicsSimulationType simType );
+	explicit Shape( const Transform2D& spawnLoaction, ePhysicsSimulationType simType, eAlignment alignment );
 	~Shape();
 
 	virtual void Render() const = 0;
@@ -26,7 +26,9 @@ public:
 protected:
 	Rgba DeterminColor() const;
 	Rgba m_color = Rgba::BLUE;
+	Rgba m_dyingColor = Rgba::DARK_RED;
 	Rgba m_boarderColor = Rgba::BLACK;
+	Rgba m_hitColor = Rgba::RED;
 
 public:
 	Rigidbody2D* m_rigidbody;

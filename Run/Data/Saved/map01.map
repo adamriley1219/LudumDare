@@ -1,0 +1,37 @@
+
+
+<map mapDims="10.000000,5.000000">
+
+
+
+    <shape>
+        <trans pos="6.254632,6.613889" scale="1.000000,1.000000" rot="0.000000" alignment="player"/>
+        <collider radius="0.700000" extents="1.000000,1.000000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.700000" restitution="1.000000" drag="1.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="true"/>
+    </shape>
+
+
+
+
+
+    <shape>
+        <trans pos="6.324678,3.338425" scale="1.000000,1.000000" rot="0.000000" alignment="neutral"/>
+        <collider radius="0.700000" extents="11.180555,0.000000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.000000" drag="0.500000" angularDrag="0.000000" xRestricted="true" yRestricted="true" rotRestricted="true"/>
+    </shape>
+    <shape>
+        <trans pos="14.228168,7.747222" scale="1.000000,1.000000" rot="-88.539841" alignment="neutral"/>
+        <collider radius="0.700000" extents="5.904696,0.000000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.000000" drag="0.500000" angularDrag="0.000000" xRestricted="true" yRestricted="true" rotRestricted="true"/>
+    </shape>
+    <shape>
+        <trans pos="-2.483795,7.527778" scale="1.000000,1.000000" rot="-90.653175" alignment="neutral"/>
+        <collider radius="0.700000" extents="7.106944,0.000000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.000000" drag="0.500000" angularDrag="0.000000" xRestricted="true" yRestricted="true" rotRestricted="true"/>
+    </shape>
+    <shape>
+        <trans pos="6.231483,12.250000" scale="1.000000,1.000000" rot="0.000000" alignment="neutral"/>
+        <collider radius="0.700000" extents="10.092592,0.000000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.000000" drag="0.500000" angularDrag="0.000000" xRestricted="true" yRestricted="true" rotRestricted="true"/>
+    </shape>
+</map>

@@ -16,3 +16,48 @@ float GetRandomlyChosenFloat( float a, float b )
 	}
 	return b;
 }
+
+
+
+eAlignment GetAlignmentFromString( const std::string& string )
+{
+	if( string == "neutral" )
+	{
+		return ALIGNMENT_NEUTRAL;
+	}
+	if( string == "enemy" )
+	{
+		return ALIGNMENT_ENEMY;
+	}
+	if( string == "ally" )
+	{
+		return ALIGNMENT_ALLY;
+	}
+	if( string == "player" )
+	{
+		return ALIGNMENT_PLAYER;
+	}
+	return ALIGNMENT_NEUTRAL;
+}
+
+std::string GetStringFromAlignment( eAlignment alignment )
+{
+	switch( alignment )
+	{
+	case ALIGNMENT_PLAYER:
+		return "player";
+		break;
+	case ALIGNMENT_NEUTRAL:
+		return "neutral";
+		break;
+	case ALIGNMENT_ALLY:
+		return "ally";
+		break;
+	case ALIGNMENT_ENEMY:
+		return "enemy";
+		break;
+	default:
+		return "neutral";
+		break;
+	}
+}

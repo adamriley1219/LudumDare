@@ -315,7 +315,7 @@ void App::Update( float deltaSeconds )
 */
 void App::Render() const
 {
-	g_theRenderer->ClearScreen( Rgba::DARK_GRAY );
+	g_theRenderer->ClearScreen( Rgba( 0.05f, 0.05f, 0.05f, 0.9f ) );
 	g_theGame->GameRender();
 
 	if( g_theConsole->IsOpen() )

@@ -1,13 +1,18 @@
 #include "Game/Shapes/Entity.hpp"
 #include "Game/GameCommon.hpp"
+#include "Engine/Core/Time/StopWatch.hpp"
+#include "Game/App.hpp"
 
 //--------------------------------------------------------------------------
 /**
 * Entity
 */
-Entity::Entity()
+Entity::Entity( eAlignment alignment )
+	: m_alignment( alignment )
 {
 	m_tint = Rgba( 1.0f, 1.0f, 1.0f );
+	m_preventInputTimer = new StopWatch( g_theApp->m_gameClock );
+	m_preventInputTimer->SetAndReset( 0.1f );
 }
 
 
@@ -75,53 +80,6 @@ void Entity::DebugRenderPhysics() const
 }
 
 
-//--------------------------------------------------------------------------
-/**
-* isOffScreengetForwardVector
-*/
-Vec2 Entity::GetForwardVector() const
-{
-	Vec2 forwardVec = Vec2( CosDegrees( m_orientationDegrees ), SinDegrees( m_orientationDegrees ) ); 
-	forwardVec.Normalize();
-	return forwardVec;
-}
-
-//--------------------------------------------------------------------------
-/**
-* setAcceleration
-*/
-void Entity::SetAcceleration( bool on )
-{
-	m_isAccelerating = on;
-}
-
-
-//--------------------------------------------------------------------------
-/**
-* setRotationDirection
-*/
-void Entity::SetRotationDirection( int rotationDirection )
-{
-	m_rotateDirection = rotationDirection;
-}
-
-//--------------------------------------------------------------------------
-/**
-* SetRotation
-*/
-void Entity::SetRotation( float rotationDegrees )
-{
-	m_orientationDegrees = rotationDegrees;
-}
-
-//--------------------------------------------------------------------------
-/**
-* SetRotationGetRotationDegrees
-*/
-float Entity::GetRotationDegrees() const
-{
-	return m_orientationDegrees;
-}
 
 //--------------------------------------------------------------------------
 /**

@@ -1,0 +1,7 @@
+<map mapDims="10.000000,5.000000">
+    <shape>
+        <trans pos="0.0,0.0" scale="1.000000,1.000000" rot="0.000000" alignment="player"/>
+        <collider radius="0.700000" extents="0.000000,0.000000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.000000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+</map>

@@ -182,7 +182,12 @@ bool Game::HandleKeyPressed( unsigned char keyCode )
 		case '3':
 			m_rotRestrcted =! m_rotRestrcted;
 			break;
-
+		case '4':
+			ToggleAlignment();
+			break;
+		case '5':
+			SetEnd();
+			break;
 
 			// G
 		case 'G':
@@ -198,6 +203,12 @@ bool Game::HandleKeyPressed( unsigned char keyCode )
 			}
 			break;
 
+		case 219:
+			m_angularVel -= 2.f;
+			break;
+		case 221:
+			m_angularVel += 2.f;
+			break;
 
 		case 78: // 'N'
 			m_mass -= 0.15f;
@@ -240,6 +251,19 @@ bool Game::HandleKeyPressed( unsigned char keyCode )
 			m_deletingSelected = true;
 			return true;
 
+		
+
+		default:
+			break;
+		}
+	}
+	else if( m_state == GAMESTATE_GAMEPLAY )
+	{
+		switch( keyCode )
+		{
+		case 187:
+			LoadNextMap();
+			break;
 		default:
 			break;
 		}
@@ -286,6 +310,11 @@ void Game::UpdateGame( float deltaSeconds )
 	UpdateStates();
 	m_gameTime += deltaSeconds;
 	++m_stateFrameCount;
+	if( m_toNextLevel )
+	{
+		m_toNextLevel = false;
+		++m_curMapIdx;
+	}
 	switch( m_state )
 	{
 	case GAMESTATE_INIT:
@@ -328,7 +357,7 @@ void Game::UpdateGame( float deltaSeconds )
 	DebugRenderScreenBasis( 0.0f, Vec2( screenWidth - 4.5f, -screenHeight + 4.5f ), Vec3( camModle.GetK() ), Vec3( camModle.GetJ() ), Vec3( camModle.GetI() ), 4.0f );
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, "Camera: %.02f,%.02f,%.02f", m_curCamera->GetModelMatrix().m_values[Matrix44::Tx],  m_curCamera->GetModelMatrix().m_values[Matrix44::Ty],  m_curCamera->GetModelMatrix().m_values[Matrix44::Tz] );
 
-	UpdateCamera( deltaSeconds );
+	UpdatePlayerPosAndCamera( deltaSeconds );
 }
 
 //--------------------------------------------------------------------------
@@ -404,6 +433,7 @@ void Game::SelectShape()
 			m_yRestrcted	= m_selectedShape->m_rigidbody->IsYRestricted();
 			m_rotRestrcted	= m_selectedShape->m_rigidbody->IsRotRestricted();
 
+			m_angularVel = m_selectedShape->m_rigidbody->GetAngularVelocity();
 			// 			m_restitution	= m_selectedShape->m_rigidbody->GetRestitution();
 			// 			m_friction		= m_selectedShape->m_rigidbody->GetFriction();
 			// 			m_mass			= m_selectedShape->m_rigidbody->GetMass();
@@ -439,6 +469,8 @@ void Game::SelectShape()
 			m_xRestrcted	= m_selectedShape->m_rigidbody->IsXRestricted();
 			m_yRestrcted	= m_selectedShape->m_rigidbody->IsYRestricted();
 			m_rotRestrcted	= m_selectedShape->m_rigidbody->IsRotRestricted();
+
+			m_angularVel = m_selectedShape->m_rigidbody->GetAngularVelocity();
 
 			// 			m_restitution	= m_selectedShape->m_rigidbody->GetRestitution();
 			// 			m_friction		= m_selectedShape->m_rigidbody->GetFriction();
@@ -485,6 +517,7 @@ void Game::DeleteShape()
 		m_selectedShape->m_isGarbage = true;
 		m_selectedShape = nullptr;
 	}
+	m_deletingSelected = false;
 }
 
 //--------------------------------------------------------------------------
@@ -512,10 +545,49 @@ void Game::EndShapeConstruction()
 		m_constEnd =  m_cursor->m_trasform.m_position;
 		Vec2 disp = m_constEnd - m_constStart;
 		Transform2D trans( m_constStart + disp * 0.5f, disp.GetAngleDegrees() );
-		Shape* shape = new Pill( trans , m_spawnDynamic ? PHYSICS_SIM_DYNAMIC : PHYSICS_SIM_STATIC, disp.GetLength(), m_curThickness, m_curRadius, m_mass, m_restitution, m_friction, m_drag, m_angularDrag );
+		Shape* shape = new Pill( trans , m_spawnDynamic ? PHYSICS_SIM_DYNAMIC : PHYSICS_SIM_STATIC, m_curAlignment, disp.GetLength(), m_curThickness, m_curRadius, m_mass, m_restitution, m_friction, m_drag, m_angularDrag );
 		shape->m_rigidbody->SetRestrictions( m_xRestrcted, m_yRestrcted, m_rotRestrcted );
+		shape->m_rigidbody->SetAngularVelocity( m_angularVel );
 		m_maps[m_curMapIdx]->AddShape( shape );
 		m_constructing = false;
+	}
+}
+
+//--------------------------------------------------------------------------
+/**
+* ToggleAlignment
+*/
+void Game::ToggleAlignment()
+{
+	switch( m_curAlignment )
+	{
+	case ALIGNMENT_PLAYER:
+		m_curAlignment = ALIGNMENT_NEUTRAL;
+		break;
+	case ALIGNMENT_NEUTRAL:
+		m_curAlignment = ALIGNMENT_ALLY;
+		break;
+	case ALIGNMENT_ALLY:
+		m_curAlignment = ALIGNMENT_ENEMY;
+		break;
+	case ALIGNMENT_ENEMY:
+		m_curAlignment = ALIGNMENT_PLAYER;
+		break;
+	default:
+		m_curAlignment = ALIGNMENT_NEUTRAL;
+		break;
+	}
+}
+
+//--------------------------------------------------------------------------
+/**
+* SetEnd
+*/
+void Game::SetEnd()
+{
+	if( m_state == GAMESTATE_EDITOR )	
+	{
+		m_maps[0]->m_endZone = Vec2( g_theGameController->GetWorldMousePos() );
 	}
 }
 
@@ -680,22 +752,26 @@ void Game::RenderPauseMenu() const
 	m_pauseMenuCanvis.Render();
 }
 
+
 //--------------------------------------------------------------------------
 /**
 * DrawEditorValues
 */
 void Game::DrawEditorValues()
 {
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Set EndPos [5]" ).c_str() );
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Number of Objects:	   %d", GetCurrentMap()->m_shapes.size() ).c_str() );
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Mass[n,m]:       %.2f", m_mass ).c_str() );
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Restitution[<,>]:%.2f", m_restitution ).c_str() );
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Friction[V,B]:   %.2f", m_friction ).c_str() );
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Drag[X,C]:	   %.2f", m_drag ).c_str() );
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects AngularDrag[F,G]:%.2f", m_angularDrag ).c_str() );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects AngularVel[[,]]: %.2f", m_angularVel ).c_str() );
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Radius[K,L]:	   %.2f", m_curRadius ).c_str() );
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Thickness[H,J]:  %.2f", m_curThickness ).c_str() );
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Objects Type[']: %s", m_spawnDynamic ? "DYNAMIC" : "STATIC" ).c_str() );
 	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Restrictions :  x:%s, y:%s Rot: %s", m_xRestrcted ? "True " : "False", m_yRestrcted ? "True " : "False", m_rotRestrcted ? "True " : "False" ).c_str() );
+	DebugRenderMessage( 0.0f, Rgba::WHITE, Rgba::WHITE, Stringf( "Alignment[4] : %s", GetStringFromAlignment( m_curAlignment ).c_str() ).c_str() );
 }
 
 //--------------------------------------------------------------------------
@@ -716,8 +792,15 @@ void Game::SetupMainMenuUI()
 	textchild->m_pivot = Vec2::ALIGN_CENTERED;
 	textchild->m_virtualPosition = Vec4( .5f, .9f, 0, 0 );
 	textchild->m_virtualSize = Vec4( .40f, .40f, 0.0f, 0.0f );
-	textchild->m_text = "--RTS TITLE--";
+	textchild->m_text = "Shape Wars";
 	textchild->m_color = Rgba::LIGHT_RED;
+
+	textchild = m_mainMenuCanvis.CreateChild<UILabel>();
+	textchild->m_pivot = Vec2::ALIGN_CENTERED;
+	textchild->m_virtualPosition = Vec4( .5f, .1f, 0, 0 );
+	textchild->m_virtualSize = Vec4( .40f, .40f, 0.0f, 0.0f );
+	textchild->m_text = "Movement Controls: W,A,S,D";
+	textchild->m_color = Rgba::GREEN;
 
 	UIButton* button = m_mainMenuCanvis.CreateChild<UIButton>();
 	button->m_pivot = Vec2::ALIGN_CENTER_LEFT;
@@ -886,9 +969,9 @@ void Game::SetUpPauseMenu()
 
 //--------------------------------------------------------------------------
 /**
-* UpdateCamera
+* UpdatePlayerPosAndCamera
 */
-void Game::UpdateCamera( float deltaSeconds )
+void Game::UpdatePlayerPosAndCamera( float deltaSeconds )
 {
 	UNUSED( deltaSeconds );
 
@@ -965,6 +1048,15 @@ void Game::UpdateEditor( float deltaSec )
 	{
 		UpdateEditorUI( deltaSec );
 	}
+
+	if( m_selectedShape )
+	{
+		m_selectedShape->m_rigidbody->SetMass( m_mass );
+		m_selectedShape->m_rigidbody->SetPhyMaterial( m_restitution, m_friction, m_drag, m_angularDrag );
+		m_selectedShape->m_rigidbody->SetRestrictions( m_xRestrcted, m_yRestrcted, m_rotRestrcted );
+		m_selectedShape->m_rigidbody->SetAngularVelocity( m_angularVel );
+	}
+
 	
 	m_cursor->Update( deltaSec );
 	m_maps[0]->Update( deltaSec );
@@ -1094,12 +1186,12 @@ void Game::InisializeGame()
 	g_theEventSystem->SubscribeEventCallbackFunction( "save", Save );
 	g_theEventSystem->SubscribeEventCallbackFunction( "load", LoadMap );
 
-	Map* editMap =  new Map( g_theRenderer );
-	m_maps.push_back( editMap );
-	editMap->Load( "map0" );
-	editMap =  new Map( g_theRenderer );
-	m_maps.push_back( editMap );
-	editMap->Load( "map1" );
+
+	uint mapCount = 2;
+	for( uint mapIdx = 0; mapIdx < mapCount + 1; ++mapIdx )
+	{
+		m_maps.push_back( new Map( g_theRenderer ) );
+	}
 
 	initGame = true;
 
@@ -1125,11 +1217,31 @@ void Game::LoadLevel( unsigned int index )
 	m_curMapIdx = index;
 	ASSERT_OR_DIE( (unsigned int) m_maps.size() > index, "Bad level index" );
 	
+	for( Map* m : m_maps )
+	{
+		m->DeleteAllShapes();
+	}
+
 	if( !m_maps[index]->IsLoaded() )
 	{
-		m_maps[index]->Load( Stringf("map%u", index ).c_str() );
+		m_maps[index]->Load( Stringf("Data/Saved/map%u.map", index ).c_str() );
 	}
 	SwitchStates( m_curMapIdx == 0 ? GAMESTATE_EDITOR : GAMESTATE_GAMEPLAY );
+}
+
+//--------------------------------------------------------------------------
+/**
+* LoadNextMap
+*/
+void Game::LoadNextMap()
+{
+	if( m_curMapIdx < (uint) m_maps.size() - 1 )
+	{
+		m_toNextLevel = true;
+		SwitchStates( GAMESTATE_LOADING );
+		return;
+	}
+	HandleQuitRequest();
 }
 
 //--------------------------------------------------------------------------

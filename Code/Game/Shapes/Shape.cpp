@@ -14,7 +14,8 @@
 /**
 * Shape
 */
-Shape::Shape( const Transform2D& spawnLoaction, ePhysicsSimulationType simType )
+Shape::Shape( const Transform2D& spawnLoaction, ePhysicsSimulationType simType, eAlignment alignment )
+	: Entity( alignment )
 {
 	m_transform = spawnLoaction;
 	m_rigidbody = g_thePhysicsSystem->CreateRigidbody( 1.0f );
@@ -91,15 +92,15 @@ Rgba Shape::DeterminColor() const
 		{
 		case ePhysicsSimulationType::PHYSICS_SIM_DYNAMIC:
 			if( m_collider->IsColliding() )
-				color = Rgba::RED;
+				color = m_boarderColor;
 			else
-				color = Rgba::BLUE;
+				color = m_hitColor;
 			break;
 		case ePhysicsSimulationType::PHYSICS_SIM_STATIC:
 			if( m_collider->IsColliding() )
-				color = Rgba::MAGENTA;
+				color = m_boarderColor;
 			else
-				color = Rgba::YELLOW;
+				color = m_hitColor;
 			break;
 		}
 	}
