@@ -184,4 +184,5 @@ private:
 	int shaderType = 0;
 
 	float m_gameTime = 0.0f;
+	uint m_numLevels = 3;
 };

@@ -1049,7 +1049,7 @@ void Game::UpdateEditor( float deltaSec )
 		UpdateEditorUI( deltaSec );
 	}
 
-	if( m_selectedShape )
+	if( m_selectedShape && m_selectedShape->IsAlive() )
 	{
 		m_selectedShape->m_rigidbody->SetMass( m_mass );
 		m_selectedShape->m_rigidbody->SetPhyMaterial( m_restitution, m_friction, m_drag, m_angularDrag );
@@ -1187,8 +1187,7 @@ void Game::InisializeGame()
 	g_theEventSystem->SubscribeEventCallbackFunction( "load", LoadMap );
 
 
-	uint mapCount = 2;
-	for( uint mapIdx = 0; mapIdx < mapCount + 1; ++mapIdx )
+	for( uint mapIdx = 0; mapIdx < m_numLevels + 1; ++mapIdx )
 	{
 		m_maps.push_back( new Map( g_theRenderer ) );
 	}

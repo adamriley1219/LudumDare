@@ -1,0 +1,127 @@
+<map mapDims="10.000000,5.000000" endZone="27.675852,27.761883">
+    <shape>
+        <trans pos="0.115050,12.059294" scale="1.000000,1.000000" rot="-109.230667" alignment="neutral"/>
+        <collider radius="0.000000" extents="0.733908,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="-0.142793,17.586826" scale="1.000000,1.000000" rot="-123.215233" alignment="neutral"/>
+        <collider radius="0.000000" extents="1.618039,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="3.354217,20.890453" scale="1.000000,1.000000" rot="-165.230804" alignment="neutral"/>
+        <collider radius="0.000000" extents="1.833247,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="10.332124,19.826847" scale="1.000000,1.000000" rot="-154.006012" alignment="neutral"/>
+        <collider radius="0.000000" extents="2.169403,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="22.756985,14.054132" scale="1.000000,1.000000" rot="-41.378532" alignment="neutral"/>
+        <collider radius="0.000000" extents="0.902023,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="21.741726,7.462992" scale="1.000000,1.000000" rot="-29.744671" alignment="neutral"/>
+        <collider radius="0.000000" extents="0.129926,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="16.278652,9.284016" scale="1.000000,1.000000" rot="-138.239655" alignment="neutral"/>
+        <collider radius="0.000000" extents="0.604913,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="16.568727,15.585080" scale="1.000000,1.000000" rot="-83.659828" alignment="neutral"/>
+        <collider radius="0.000000" extents="0.875578,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="20.033506,10.976118" scale="1.000000,1.000000" rot="107.265816" alignment="neutral"/>
+        <collider radius="0.000000" extents="1.248803,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="17.648449,3.063527" scale="1.000000,1.000000" rot="4.398761" alignment="neutral"/>
+        <collider radius="0.000000" extents="0.630352,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="10.767235,4.288287" scale="1.000000,1.000000" rot="-29.275280" alignment="neutral"/>
+        <collider radius="0.000000" extents="1.219340,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="3.757099,7.801412" scale="1.000000,1.000000" rot="-39.957554" alignment="neutral"/>
+        <collider radius="0.000000" extents="2.333653,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="4.433939,11.346768" scale="1.000000,1.000000" rot="-100.008141" alignment="neutral"/>
+        <collider radius="0.000000" extents="0.278192,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="8.752829,8.252639" scale="1.000000,1.000000" rot="-45.795731" alignment="neutral"/>
+        <collider radius="0.000000" extents="1.641068,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="10.348238,12.233108" scale="1.000000,1.000000" rot="-37.874989" alignment="neutral"/>
+        <collider radius="0.000000" extents="1.837422,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="3.579831,15.633427" scale="1.000000,1.000000" rot="-36.869915" alignment="neutral"/>
+        <collider radius="0.000000" extents="0.725187,0.750000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="0.900000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="0.000000,0.000000" scale="1.000000,1.000000" rot="0.000000" alignment="player"/>
+        <collider radius="0.700000" extents="0.000000,0.000000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="dynamic" mass="1.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="1.000000" drag="2.000000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="12.082974,-2.791595" scale="1.000000,1.000000" rot="0.000000" alignment="neutral"/>
+        <collider radius="0.000000" extents="17.366251,0.800000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="100.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.800000" restitution="1.200000" drag="5.000000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="-6.034036,10.460013" scale="1.000000,1.000000" rot="89.905777" alignment="neutral"/>
+        <collider radius="0.000000" extents="14.076188,0.800000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="100.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="1.200000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="7.148585,25.463253" scale="1.000000,1.000000" rot="0.094834" alignment="neutral"/>
+        <collider radius="0.000000" extents="13.985022,0.800000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="100.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.200000" restitution="1.200000" drag="0.500000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="30.382996,10.134383" scale="1.000000,1.000000" rot="90.000000" alignment="neutral"/>
+        <collider radius="0.000000" extents="13.749998,0.800000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="100.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.800000" restitution="1.200000" drag="5.000000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="21.801104,28.753229" scale="1.000000,1.000000" rot="90.000000" alignment="neutral"/>
+        <collider radius="0.000000" extents="4.114584,0.800000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="100.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.800000" restitution="1.200000" drag="5.000000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="28.641380,32.121284" scale="1.000000,1.000000" rot="0.000000" alignment="neutral"/>
+        <collider radius="0.000000" extents="6.006945,0.800000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="100.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.800000" restitution="1.200000" drag="5.000000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="33.814995,27.850451" scale="1.000000,1.000000" rot="-90.000000" alignment="neutral"/>
+        <collider radius="0.000000" extents="3.420139,0.800000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="100.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.800000" restitution="1.200000" drag="5.000000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+    <shape>
+        <trans pos="32.912216,23.510174" scale="1.000000,1.000000" rot="0.000000" alignment="neutral"/>
+        <collider radius="0.000000" extents="1.718750,0.800000" locCenter="0.000000,0.000000" locRight="1.000000,0.000000"/>
+        <rigidbody type="static" mass="100.000000" velocity="0.000000,0.000000" angularVelocity="0.000000" friction="0.800000" restitution="1.200000" drag="5.000000" angularDrag="0.000000" xRestricted="false" yRestricted="false" rotRestricted="false"/>
+    </shape>
+</map>
