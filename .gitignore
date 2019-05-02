@@ -27,7 +27,7 @@
 !data/**/*.obj
 !data/*.dll
 !Run/*.dll
-
+!Run/**/*.obj
 
 # Ignoring a complete folder (don't want my screenshot folder)
 data/screenshot/
