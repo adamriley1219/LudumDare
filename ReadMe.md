@@ -1,5 +1,3 @@
-RTS
-======
 
 ## DevConcole Input
 
@@ -19,6 +17,7 @@ RTS
 
 ```
 
-Once the game is running use the following controls to navagate your ship.
+Once the game is running use the following controls to navagate your circle.
 --------------------------------------------------------------------------
 Keyboard Controls:
+WASD
