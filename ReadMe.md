@@ -1,23 +1,15 @@
 
-## DevConcole Input
-
-```
-- **~** - Turn Open Console
-- **`** - Turn Open Fading Console
-- **ESC** - Turn Off Console if open, Closes App if Console already closed.
-
-```
-
-
-## Debugging Controls
-```
-- **H** - help
-- **W** - Run test Event in console
-- **ESC** - to exit.
-
-```
+##Flash Hack
+2 days
+Main tool tested is my Physics System within my own engine.
 
 Once the game is running use the following controls to navagate your circle.
 --------------------------------------------------------------------------
 Keyboard Controls:
 WASD
+
+
+##Map Editor
+Not giving a lot of documentation on this at this time.
+Saving and loading maps are done though the console.
+**~**
